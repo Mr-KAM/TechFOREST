@@ -1,0 +1,50 @@
+# Environment variables
+*.env
+.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+*.whl
+pip-log.txt
+
+# Virtual environments
+env/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# GEE credentials
+*.json
+!package.json
+
+# Alembic
+alembic/versions/__pycache__/
+
+# Logs
+*.log
