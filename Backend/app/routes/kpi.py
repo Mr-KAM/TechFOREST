@@ -1,7 +1,10 @@
+import asyncio
+from functools import partial
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.models.user import User
-from app.schemas.kpi import KoboForm, KoboSubmission, KPIDashboard, KPIValue
+from app.schemas.kpi import KoboDashboard, KoboForm, KoboSubmission, KPIDashboard, KPIValue
 from app.security import get_current_user
 from app.services.kobo_service import (
     compute_indicators,
@@ -13,25 +16,49 @@ from app.services.kobo_service import (
 router = APIRouter(prefix="/api/kpi", tags=["KPI & KoboToolbox"])
 
 
+async def _run_sync(func, *args, **kwargs):
+    """Exécute une fonction synchrone (pykobo) dans un thread pool."""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, partial(func, *args, **kwargs))
+
+
 @router.get("/forms", response_model=list[KoboForm])
 async def get_kobo_forms(current_user: User = Depends(get_current_user)):
     """Liste les formulaires KoboToolbox disponibles."""
     try:
-        forms = await list_forms()
+        forms = await _run_sync(list_forms)
         return forms
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Erreur KoboToolbox : {e}")
 
 
+@router.get("/dashboard", response_model=KoboDashboard)
+async def get_global_dashboard(current_user: User = Depends(get_current_user)):
+    """Tableau de bord global – résumé de tous les formulaires."""
+    try:
+        forms = await _run_sync(list_forms)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Erreur KoboToolbox : {e}")
+
+    total_submissions = sum(f.get("submission_count", 0) or 0 for f in forms)
+    return KoboDashboard(
+        total_forms=len(forms),
+        total_submissions=total_submissions,
+        forms=[
+            {"uid": f["uid"], "name": f["name"], "submissions": f.get("submission_count", 0) or 0}
+            for f in forms
+        ],
+    )
+
+
 @router.get("/forms/{form_uid}/submissions", response_model=list[KoboSubmission])
 async def get_submissions(
     form_uid: str,
-    limit: int = Query(default=500, le=5000),
     current_user: User = Depends(get_current_user),
 ):
     """Récupère les soumissions d'un formulaire KoboToolbox."""
     try:
-        submissions = await get_form_submissions(form_uid, limit=limit)
+        submissions = await _run_sync(get_form_submissions, form_uid)
         return [
             KoboSubmission(id=s.get("_id", 0), data=s)
             for s in submissions
@@ -51,8 +78,8 @@ async def get_kpi_dashboard(
     Calcule automatiquement count, sum, mean pour les champs numériques.
     """
     try:
-        metadata = await get_form_metadata(form_uid)
-        submissions = await get_form_submissions(form_uid)
+        metadata = await _run_sync(get_form_metadata, form_uid)
+        submissions = await _run_sync(get_form_submissions, form_uid)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Erreur KoboToolbox : {e}")
 

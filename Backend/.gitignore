@@ -39,9 +39,12 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
-# GEE credentials
-*.json
-!package.json
+# GEE credentials (secrets)
+gee-service-account-key.json
+service-account-key-gee-true.json
+
+# Keep GeoJSON data files
+!data/*.geojson
 
 # Alembic
 alembic/versions/__pycache__/

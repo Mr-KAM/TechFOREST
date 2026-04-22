@@ -13,6 +13,19 @@ class KoboSubmission(BaseModel):
     data: dict
 
 
+class KoboFormSummary(BaseModel):
+    uid: str
+    name: str
+    submissions: int
+
+
+class KoboDashboard(BaseModel):
+    """Résumé global de tous les formulaires (pour le frontend)."""
+    total_forms: int
+    total_submissions: int
+    forms: list[KoboFormSummary]
+
+
 class KPIValue(BaseModel):
     indicator_name: str
     value: float | int | str

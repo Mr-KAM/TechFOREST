@@ -31,5 +31,5 @@ class GEELayer(Base):
     date_start = Column(DateTime(timezone=True), nullable=True)
     date_end = Column(DateTime(timezone=True), nullable=True)
     tile_url = Column(Text, nullable=True)
-    metadata = Column(Text, nullable=True)  # JSON extra info
+    extra_metadata = Column(Text, nullable=True)  # JSON extra info
     created_at = Column(DateTime(timezone=True), server_default=func.now())

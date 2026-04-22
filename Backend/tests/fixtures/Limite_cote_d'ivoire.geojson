@@ -1,0 +1,13 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {"name": "Côte d'Ivoire"},
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-8.6, 4.3], [-2.5, 4.3], [-2.5, 10.7], [-8.6, 10.7], [-8.6, 4.3]]]
+      }
+    }
+  ]
+}

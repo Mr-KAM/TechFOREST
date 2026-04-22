@@ -6,17 +6,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.database import Base, engine
-from app.routes import auth, carto, kpi
+from app.database import init_db
+from app.routes import auth, carto, kpi, media
 
 settings = get_settings()
 
 logging.basicConfig(level=logging.INFO if not settings.DEBUG else logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# ─── Création des tables ──────────────────────────────────────
+# ─── Création des tables (PostGIS + tables) ───────────────────
 # En production, utiliser Alembic pour les migrations.
-Base.metadata.create_all(bind=engine)
+init_db()
 
 # ─── Application FastAPI ──────────────────────────────────────
 app = FastAPI(
@@ -44,6 +44,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(carto.router)
 app.include_router(kpi.router)
+app.include_router(media.router)
 
 
 @app.get("/", tags=["Health"])
