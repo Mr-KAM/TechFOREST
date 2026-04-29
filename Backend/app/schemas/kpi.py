@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 
 class KoboForm(BaseModel):
+    key: str | None = None
     uid: str
     name: str
     deployment_status: str | None = None
@@ -14,6 +15,7 @@ class KoboSubmission(BaseModel):
 
 
 class KoboFormSummary(BaseModel):
+    key: str | None = None
     uid: str
     name: str
     submissions: int
@@ -38,3 +40,17 @@ class KPIDashboard(BaseModel):
     form_name: str
     total_submissions: int
     indicators: list[KPIValue]
+
+
+class FormIndicators(BaseModel):
+    """Indicateurs métier calculés pour un formulaire configuré."""
+    form_key: str
+    form_name: str
+    total_submissions: int
+    indicators: list[KPIValue]
+
+
+class GlobalIndicators(BaseModel):
+    """Indicateurs agrégés pour les 4 formulaires configurés."""
+    total_submissions: int
+    forms: list[FormIndicators]

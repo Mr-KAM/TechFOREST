@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     URL_KOBO: str = "https://kf.kobotoolbox.org/"
     KOBO_API_TOKEN: str = ""
     API_VERSION: int = 2
+    UID_MONITORING_FAUNE: str = ""
+    UID_MONITORING_REBOISEMENT: str = ""
+    UID_PLANTING_ARBRE: str = ""
+    UID_MENACES: str = ""
 
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
@@ -36,6 +40,15 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+
+    @property
+    def kobo_form_uids(self) -> dict[str, str]:
+        return {
+            "monitoring_faune": self.UID_MONITORING_FAUNE.strip(),
+            "monitoring_reboisement": self.UID_MONITORING_REBOISEMENT.strip(),
+            "planting_arbre": self.UID_PLANTING_ARBRE.strip(),
+            "menaces": self.UID_MENACES.strip(),
+        }
 
 
 @lru_cache()
