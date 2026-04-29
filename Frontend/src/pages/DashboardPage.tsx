@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Layers, ChevronRight, ChevronLeft, Eye, EyeOff, Satellite } from "lucide-react";
+import { Loader2, Layers, ChevronRight, ChevronLeft, Eye, EyeOff, Satellite, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LAYER_TYPES = [
@@ -229,6 +229,8 @@ function LegendSidebar({
   onToggleGeeLayer,
   geeOpacity,
   onOpacityChange,
+  mobileOpen,
+  onMobileClose,
 }: {
   layerType: string;
   geeResult: GEEClipResponse | null;
@@ -238,6 +240,8 @@ function LegendSidebar({
   onToggleGeeLayer: () => void;
   geeOpacity: number;
   onOpacityChange: (v: number) => void;
+  mobileOpen: boolean;
+  onMobileClose: () => void;
 }) {
   const [open, setOpen] = useState(true);
   const legend = LAYER_LEGENDS[layerType];
@@ -245,20 +249,34 @@ function LegendSidebar({
   return (
     <div
       className={cn(
-        "relative flex flex-col border-l bg-card transition-all duration-200",
-        open ? "w-72" : "w-0 overflow-hidden border-l-0"
+        "flex flex-col border-l bg-card transition-all duration-200",
+        // Desktop
+        "md:relative md:translate-x-0",
+        open ? "md:w-72" : "md:w-0 md:overflow-hidden md:border-l-0",
+        // Mobile drawer
+        "fixed inset-y-0 right-0 z-40 w-[85vw] max-w-sm",
+        mobileOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"
       )}
     >
-      {/* Toggle button */}
+      {/* Toggle button (desktop only) */}
       <button
         onClick={() => setOpen(!open)}
-        className="absolute -left-7 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-l-md border border-r-0 bg-card text-muted-foreground shadow-sm hover:bg-accent"
+        className="hidden md:flex absolute -left-7 top-3 z-10 h-7 w-7 items-center justify-center rounded-l-md border border-r-0 bg-card text-muted-foreground shadow-sm hover:bg-accent"
         title={open ? "Masquer la légende" : "Afficher la légende"}
       >
         {open ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
       </button>
 
-      {open && (
+      {/* Mobile close button */}
+      <button
+        onClick={onMobileClose}
+        className="md:hidden absolute right-3 top-3 z-10 text-muted-foreground hover:text-foreground"
+        aria-label="Fermer"
+      >
+        <X className="h-4 w-4" />
+      </button>
+
+      {(open || mobileOpen) && (
         <div className="flex-1 overflow-y-auto p-4 space-y-5">
           {/* ── Couches visibles ── */}
           <div>
@@ -416,6 +434,8 @@ export default function DashboardPage() {
   const [showZones, setShowZones] = useState(true);
   const [showGeeLayer, setShowGeeLayer] = useState(true);
   const [geeOpacity, setGeeOpacity] = useState(0.75);
+  const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
+  const [mobileLegendOpen, setMobileLegendOpen] = useState(false);
 
   useEffect(() => {
     getZones().then(setZones).catch(console.error);
@@ -449,16 +469,67 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex h-full">
-      {/* Sidebar */}
-      <aside className="w-80 shrink-0 border-r bg-card p-4 space-y-4 overflow-y-auto">
+    <div className="flex h-full relative">
+      {/* Mobile backdrop */}
+      {(mobileControlsOpen || mobileLegendOpen) && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          onClick={() => {
+            setMobileControlsOpen(false);
+            setMobileLegendOpen(false);
+          }}
+        />
+      )}
+
+      {/* Mobile floating toggles */}
+      <div className="md:hidden absolute top-3 left-3 z-20 flex gap-2">
+        <Button
+          size="icon"
+          variant="secondary"
+          className="h-9 w-9 shadow-lg"
+          onClick={() => setMobileControlsOpen(true)}
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="md:hidden absolute top-3 right-3 z-20">
+        <Button
+          size="icon"
+          variant="secondary"
+          className="h-9 w-9 shadow-lg"
+          onClick={() => setMobileLegendOpen(true)}
+        >
+          <Layers className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Sidebar gauche — contrôles d'analyse */}
+      <aside
+        className={cn(
+          "shrink-0 border-r bg-card p-4 space-y-4 overflow-y-auto transition-transform duration-200",
+          // Desktop
+          "md:relative md:translate-x-0 md:w-80",
+          // Mobile
+          "fixed inset-y-0 left-0 z-40 w-[85vw] max-w-sm",
+          mobileControlsOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        )}
+      >
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold flex items-center gap-2">
             <Satellite className="h-4 w-4 text-primary" /> Analyse GEE
           </h2>
-          <Badge variant="outline" className="text-[10px] h-5">
-            {zones.length} zones
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-[10px] h-5">
+              {zones.length} zones
+            </Badge>
+            <button
+              className="md:hidden text-muted-foreground hover:text-foreground"
+              onClick={() => setMobileControlsOpen(false)}
+              aria-label="Fermer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
         <Separator />
 
@@ -579,6 +650,8 @@ export default function DashboardPage() {
         onToggleGeeLayer={() => setShowGeeLayer((v) => !v)}
         geeOpacity={geeOpacity}
         onOpacityChange={setGeeOpacity}
+        mobileOpen={mobileLegendOpen}
+        onMobileClose={() => setMobileLegendOpen(false)}
       />
     </div>
   );

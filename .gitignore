@@ -43,3 +43,4 @@ npm-debug.log*
 
 # Frontend (ignoré pour l'instant)
 # Frontend/
+Frontend/node_modules/
