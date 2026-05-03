@@ -187,7 +187,7 @@ export default function HomePage() {
                     variant="outline"
                     className="h-12 gap-2 px-8 text-base bg-white/10 backdrop-blur-md border-white/30 text-white hover:bg-white hover:text-black"
                   >
-                    <BarChart3 className="h-5 w-5" /> KPI Terrain
+                    <BarChart3 className="h-5 w-5" /> Suivi des indicateurs
                   </Button>
                 </Link>
               </>

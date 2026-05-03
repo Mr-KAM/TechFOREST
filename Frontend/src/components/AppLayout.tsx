@@ -40,7 +40,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { to: "/", icon: Home, label: "Accueil" },
   { to: "/dashboard", icon: Map, label: "Carte & Analyse" },
-  { to: "/kpi", icon: BarChart3, label: "KPI Terrain" },
+  { to: "/kpi", icon: BarChart3, label: "Suivi des indicateurs" },
 ];
 
 function SidebarLink({
@@ -113,7 +113,7 @@ export default function AppLayout() {
         {/* ── Sidebar (desktop uniquement) ── */}
         <aside
           className={cn(
-            "hidden md:flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-200",
+            "hidden lg:flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-200",
             collapsed ? "w-[60px]" : "w-[240px]"
           )}
         >
@@ -164,8 +164,8 @@ export default function AppLayout() {
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Top bar */}
           <header className="flex h-14 items-center gap-3 border-b bg-background/80 backdrop-blur-sm px-4 shrink-0">
-            {/* Brand mobile */}
-            <div className="flex items-center gap-2 md:hidden">
+            {/* Brand mobile / tablette */}
+            <div className="flex items-center gap-2 lg:hidden">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20">
                 <TreePine className="h-4 w-4 text-primary" />
               </div>
@@ -176,7 +176,7 @@ export default function AppLayout() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hidden md:inline-flex"
+              className="h-8 w-8 text-muted-foreground hidden lg:inline-flex"
               onClick={() => setCollapsed(!collapsed)}
             >
               {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
@@ -251,13 +251,13 @@ export default function AppLayout() {
           </header>
 
           {/* Page content */}
-          <main className="flex-1 overflow-auto pb-16 md:pb-0">
+          <main className="flex-1 overflow-auto pb-16 lg:pb-0">
             <Outlet />
           </main>
         </div>
 
-        {/* ── Bottom navigation (mobile uniquement) ── */}
-        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex h-16 items-stretch border-t bg-sidebar text-sidebar-foreground shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
+        {/* ── Bottom navigation (mobile + tablette) ── */}
+        <nav className="hidden max-lg:flex fixed bottom-0 inset-x-0 z-40 h-16 items-stretch border-t bg-sidebar text-sidebar-foreground shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
           {NAV_ITEMS.map((item) => {
             const active = location.pathname === item.to;
             const Icon = item.icon;

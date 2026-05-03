@@ -239,6 +239,108 @@ def _indicators_menaces(submissions: list[dict]) -> list[dict]:
     ]
 
 
+# ─── Extraction des points GPS ───────────────────────────────
+
+_GEOFIELD_TOKENS = ("gps", "geopoint", "coord", "_geolocation")
+
+
+def _parse_geopoint(value) -> tuple[float, float, float | None, float | None] | None:
+    """Parse un geopoint Kobo: 'lat lon altitude precision' ou [lat, lon]."""
+    if value is None:
+        return None
+    if isinstance(value, list):
+        if len(value) >= 2 and value[0] is not None and value[1] is not None:
+            try:
+                return float(value[0]), float(value[1]), None, None
+            except (ValueError, TypeError):
+                return None
+        return None
+    if isinstance(value, str):
+        parts = value.strip().split()
+        if len(parts) < 2:
+            return None
+        try:
+            lat = float(parts[0])
+            lon = float(parts[1])
+            alt = float(parts[2]) if len(parts) > 2 else None
+            acc = float(parts[3]) if len(parts) > 3 else None
+        except (ValueError, TypeError):
+            return None
+        if lat == 0 and lon == 0:
+            return None
+        return lat, lon, alt, acc
+    return None
+
+
+def _walk_geopoints(obj, label_keys: tuple[str, ...] = ()) -> list[dict]:
+    """
+    Parcourt récursivement obj et retourne tous les points GPS trouvés.
+    label_keys = clés (en minuscules) à utiliser comme étiquette descriptive si présentes.
+    """
+    found: list[dict] = []
+
+    def _walk(node, current_label: str | None):
+        if isinstance(node, dict):
+            # Capture une étiquette si présente dans ce niveau
+            new_label = current_label
+            for k, v in node.items():
+                if isinstance(v, str) and v:
+                    kl = k.lower().split("/")[-1]
+                    if kl in label_keys:
+                        new_label = v
+            for k, v in node.items():
+                kl = k.lower()
+                if any(t in kl for t in _GEOFIELD_TOKENS):
+                    pt = _parse_geopoint(v)
+                    if pt:
+                        lat, lon, alt, acc = pt
+                        found.append({
+                            "latitude": lat,
+                            "longitude": lon,
+                            "altitude": alt,
+                            "accuracy": acc,
+                            "label": new_label,
+                        })
+                _walk(v, new_label)
+        elif isinstance(node, list):
+            for item in node:
+                _walk(item, current_label)
+
+    _walk(obj, None)
+    return found
+
+
+# Clés textuelles à utiliser comme étiquette par formulaire
+_LABEL_KEYS_BY_FORM: dict[str, tuple[str, ...]] = {
+    "monitoring_faune": ("nom_mammifere", "nom_oiseau", "nom_reptile", "nom_amphibien"),
+    "monitoring_reboisement": ("arbre_zaranou", "arbre_apoueba"),
+    "menaces": ("type_pression",),
+    "planting_arbre": (),
+}
+
+
+def extract_locations(form_key: str | None, submissions: list[dict]) -> list[dict]:
+    """Extrait tous les points GPS d'une liste de soumissions pour un formulaire."""
+    label_keys = _LABEL_KEYS_BY_FORM.get(form_key or "", ())
+    points: list[dict] = []
+    for sub in submissions:
+        sub_id = sub.get("_id")
+        submitted_at = sub.get("_submission_time") or sub.get("end") or sub.get("start")
+        # Dédupliquer : un même submission peut avoir _geolocation + Coordonnees_GPS racine
+        seen: set[tuple[float, float]] = set()
+        for pt in _walk_geopoints(sub, label_keys):
+            key = (round(pt["latitude"], 6), round(pt["longitude"], 6))
+            if key in seen:
+                continue
+            seen.add(key)
+            points.append({
+                **pt,
+                "submission_id": sub_id,
+                "submitted_at": submitted_at,
+            })
+    return points
+
+
 
     """
     Calcule des indicateurs KPI basiques à partir des soumissions.

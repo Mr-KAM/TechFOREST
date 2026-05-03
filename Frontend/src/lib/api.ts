@@ -191,3 +191,25 @@ export function getPublicSummary(): Promise<PublicSummary> {
     return res.json();
   });
 }
+
+export interface SubmissionLocation {
+  form_key: string;
+  form_name: string;
+  submission_id: number | string | null;
+  submitted_at: string | null;
+  latitude: number;
+  longitude: number;
+  altitude: number | null;
+  accuracy: number | null;
+  label: string | null;
+}
+
+export interface LocationsResponse {
+  total: number;
+  locations: SubmissionLocation[];
+}
+
+export function getLocations(formKey?: string): Promise<LocationsResponse> {
+  const qs = formKey ? `?form_key=${encodeURIComponent(formKey)}` : "";
+  return request(`/kpi/locations${qs}`);
+}

@@ -54,3 +54,21 @@ class GlobalIndicators(BaseModel):
     """Indicateurs agrégés pour les 4 formulaires configurés."""
     total_submissions: int
     forms: list[FormIndicators]
+
+
+class SubmissionLocation(BaseModel):
+    """Un point GPS extrait d'une soumission Kobo."""
+    form_key: str
+    form_name: str
+    submission_id: int | str | None = None
+    submitted_at: str | None = None
+    latitude: float
+    longitude: float
+    altitude: float | None = None
+    accuracy: float | None = None
+    label: str | None = None  # Étiquette descriptive (ex. type de menace, espèce)
+
+
+class LocationsResponse(BaseModel):
+    total: int
+    locations: list[SubmissionLocation]

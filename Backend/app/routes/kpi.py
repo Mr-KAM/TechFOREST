@@ -12,10 +12,13 @@ from app.schemas.kpi import (
     KoboSubmission,
     KPIDashboard,
     KPIValue,
+    LocationsResponse,
+    SubmissionLocation,
 )
 from app.security import get_current_user
 from app.services.kobo_service import (
     compute_form_indicators,
+    extract_locations,
     get_form_key,
     get_form_metadata,
     get_form_submissions,
@@ -143,6 +146,42 @@ async def get_all_indicators(current_user: User = Depends(get_current_user)):
         total_submissions=sum(r.total_submissions for r in valid),
         forms=valid,
     )
+
+
+@router.get("/locations", response_model=LocationsResponse)
+async def get_all_locations(
+    form_key: str | None = Query(default=None, description="Filtrer par clé métier (ex. menaces)"),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Extrait tous les points GPS des soumissions des 4 formulaires configurés
+    (y compris ceux enfouis dans les groupes répétés).
+    """
+    settings = get_settings()
+    items = [
+        (key, uid)
+        for key, uid in settings.kobo_form_uids.items()
+        if uid and (form_key is None or key == form_key)
+    ]
+
+    async def _one(key: str, uid: str) -> list[SubmissionLocation]:
+        try:
+            metadata, submissions = await asyncio.gather(
+                _run_sync(get_form_metadata, uid),
+                _run_sync(get_form_submissions_raw, uid),
+            )
+            form_name = metadata.get("name", key)
+            pts = extract_locations(key, submissions)
+            return [
+                SubmissionLocation(form_key=key, form_name=form_name, **p)
+                for p in pts
+            ]
+        except Exception:
+            return []
+
+    grouped = await asyncio.gather(*[_one(k, u) for k, u in items])
+    locations = [loc for group in grouped for loc in group]
+    return LocationsResponse(total=len(locations), locations=locations)
 
 
 @router.get("/forms/{form_uid}/submissions", response_model=list[KoboSubmission])

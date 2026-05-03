@@ -107,6 +107,73 @@ const INDICATOR_META: Record<string, IndicatorDisplay> = {
   "Types de menaces":         { icon: AlertTriangle, color: "#b45309" },
 };
 
+// Section d'indicateurs pour un formulaire (réutilisée dans plusieurs onglets)
+function FormIndicatorsSection({
+  formData,
+  showHeader = true,
+}: {
+  formData: import("@/lib/api").FormIndicators;
+  showHeader?: boolean;
+}) {
+  const meta = FORM_META[formData.form_key];
+  const FormIcon = meta?.icon ?? FileText;
+  const formColor = meta?.color ?? "#6b7280";
+  return (
+    <div className="space-y-3">
+      {showHeader && (
+        <div className="flex items-center gap-2">
+          <div
+            className="h-7 w-7 rounded-md flex items-center justify-center"
+            style={{ backgroundColor: `${formColor}20` }}
+          >
+            <FormIcon className="h-4 w-4" style={{ color: formColor }} />
+          </div>
+          <h3 className="text-sm font-semibold">{meta?.label ?? formData.form_name}</h3>
+          <Badge variant="outline" className="text-[10px] h-5">
+            {formData.total_submissions} soumissions
+          </Badge>
+        </div>
+      )}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {formData.indicators.map((ind) => {
+          const indMeta = INDICATOR_META[ind.indicator_name];
+          const IndIcon = indMeta?.icon ?? Database;
+          const indColor = indMeta?.color ?? formColor;
+          return (
+            <Card key={ind.indicator_name} className="hover:shadow-sm transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div
+                    className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${indColor}18` }}
+                  >
+                    <IndIcon className="h-4.5 w-4.5" style={{ color: indColor }} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <p className="text-2xl font-bold leading-none">
+                    {typeof ind.value === "number"
+                      ? ind.value.toLocaleString("fr-FR")
+                      : ind.value}
+                    {ind.unit === "ha" && (
+                      <span className="text-sm font-normal text-muted-foreground ml-1">
+                        Ha
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1 leading-tight">
+                    {ind.indicator_name}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function KpiPage() {
   const [configuredForms, setConfiguredForms] = useState<KoboFormConfigured[]>([]);
   const [globalIndicators, setGlobalIndicators] = useState<GlobalIndicators | null>(null);
@@ -219,7 +286,7 @@ export default function KpiPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">KPI Terrain</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Suivi des indicateurs</h1>
           <p className="text-sm text-muted-foreground">
             Indicateurs de collecte KoboToolbox en temps réel
           </p>
@@ -294,8 +361,20 @@ export default function KpiPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="global" className="space-y-4">
-        <TabsList className="bg-muted/50">
+        <TabsList className="bg-muted/50 flex w-full overflow-x-auto justify-start">
           <TabsTrigger value="global">Vue globale</TabsTrigger>
+          <TabsTrigger value="faune" className="gap-1.5">
+            <Eye className="h-3.5 w-3.5" /> Suivi faune
+          </TabsTrigger>
+          <TabsTrigger value="reboisement" className="gap-1.5">
+            <TreePine className="h-3.5 w-3.5" /> Suivi reboisement
+          </TabsTrigger>
+          <TabsTrigger value="planting" className="gap-1.5">
+            <Sprout className="h-3.5 w-3.5" /> Suivi planting
+          </TabsTrigger>
+          <TabsTrigger value="menaces" className="gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5" /> Suivi menaces
+          </TabsTrigger>
           <TabsTrigger value="activites">Par activité</TabsTrigger>
           <TabsTrigger value="bar">Barres</TabsTrigger>
           <TabsTrigger value="pie">Répartition</TabsTrigger>
@@ -310,68 +389,35 @@ export default function KpiPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {globalIndicators.forms.map((formData) => {
-                const meta = FORM_META[formData.form_key];
-                const FormIcon = meta?.icon ?? FileText;
-                const formColor = meta?.color ?? "#6b7280";
-                return (
-                  <div key={formData.form_key} className="space-y-3">
-                    {/* Form section header */}
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="h-7 w-7 rounded-md flex items-center justify-center"
-                        style={{ backgroundColor: `${formColor}20` }}
-                      >
-                        <FormIcon className="h-4 w-4" style={{ color: formColor }} />
-                      </div>
-                      <h3 className="text-sm font-semibold">{meta?.label ?? formData.form_name}</h3>
-                      <Badge variant="outline" className="text-[10px] h-5">
-                        {formData.total_submissions} soumissions
-                      </Badge>
-                    </div>
-                    {/* Indicator cards grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {formData.indicators.map((ind) => {
-                        const indMeta = INDICATOR_META[ind.indicator_name];
-                        const IndIcon = indMeta?.icon ?? Database;
-                        const indColor = indMeta?.color ?? formColor;
-                        return (
-                          <Card key={ind.indicator_name} className="hover:shadow-sm transition-shadow">
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between gap-2">
-                                <div
-                                  className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
-                                  style={{ backgroundColor: `${indColor}18` }}
-                                >
-                                  <IndIcon className="h-4.5 w-4.5" style={{ color: indColor }} />
-                                </div>
-                              </div>
-                              <div className="mt-3">
-                                <p className="text-2xl font-bold leading-none">
-                                  {typeof ind.value === "number"
-                                    ? ind.value.toLocaleString("fr-FR")
-                                    : ind.value}
-                                  {ind.unit === "ha" && (
-                                    <span className="text-sm font-normal text-muted-foreground ml-1">
-                                      Ha
-                                    </span>
-                                  )}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1 leading-tight">
-                                  {ind.indicator_name}
-                                </p>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
+              {globalIndicators.forms.map((formData) => (
+                <FormIndicatorsSection key={formData.form_key} formData={formData} />
+              ))}
             </div>
           )}
         </TabsContent>
+
+        {/* ─── Suivi par type de formulaire ─────────────────────── */}
+        {([
+          { value: "faune", key: "monitoring_faune" },
+          { value: "reboisement", key: "monitoring_reboisement" },
+          { value: "planting", key: "planting_arbre" },
+          { value: "menaces", key: "menaces" },
+        ] as const).map(({ value, key }) => {
+          const formData = globalIndicators?.forms.find((f) => f.form_key === key);
+          return (
+            <TabsContent key={value} value={value}>
+              {!formData ? (
+                <Card>
+                  <CardContent className="py-12 text-center text-sm text-muted-foreground">
+                    Aucune donnée disponible pour ce suivi.
+                  </CardContent>
+                </Card>
+              ) : (
+                <FormIndicatorsSection formData={formData} />
+              )}
+            </TabsContent>
+          );
+        })}
 
         {/* ─── Par activité ─────────────────────────────────── */}
         <TabsContent value="activites">

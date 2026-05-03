@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON, useMap, CircleMarker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   getZones,
   clipGEE,
+  getLocations,
   type ForestZone,
   type GEEClipResponse,
+  type SubmissionLocation,
 } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Layers, ChevronRight, ChevronLeft, Eye, EyeOff, Satellite, SlidersHorizontal, X } from "lucide-react";
+import { Loader2, Layers, ChevronRight, ChevronLeft, Eye, EyeOff, Satellite, SlidersHorizontal, X, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LAYER_TYPES = [
@@ -33,6 +35,13 @@ const LAYER_TYPES = [
   { value: "slope", label: "Pente" },
   { value: "hillshade", label: "Ombrage" },
 ];
+
+const SUBMISSION_FORM_META: Record<string, { label: string; color: string }> = {
+  monitoring_faune: { label: "Suivi faune", color: "#a855f7" },        // violet
+  monitoring_reboisement: { label: "Reboisement", color: "#16a34a" },  // vert
+  planting_arbre: { label: "Plantation", color: "#0891b2" },           // cyan
+  menaces: { label: "Menaces", color: "#dc2626" },                     // rouge
+};
 
 const LAND_COVER_CLASSES: Record<string, { label: string; color: string }> = {
   "0": { label: "Eau", color: "#419BDF" },
@@ -231,6 +240,9 @@ function LegendSidebar({
   onOpacityChange,
   mobileOpen,
   onMobileClose,
+  showSubmissions,
+  onToggleSubmissions,
+  submissionCounts,
 }: {
   layerType: string;
   geeResult: GEEClipResponse | null;
@@ -242,6 +254,9 @@ function LegendSidebar({
   onOpacityChange: (v: number) => void;
   mobileOpen: boolean;
   onMobileClose: () => void;
+  showSubmissions: boolean;
+  onToggleSubmissions: () => void;
+  submissionCounts: Record<string, number>;
 }) {
   const [open, setOpen] = useState(true);
   const legend = LAYER_LEGENDS[layerType];
@@ -251,17 +266,17 @@ function LegendSidebar({
       className={cn(
         "flex flex-col border-l bg-card transition-all duration-200",
         // Desktop
-        "md:relative md:translate-x-0",
-        open ? "md:w-72" : "md:w-0 md:overflow-hidden md:border-l-0",
+        "lg:relative lg:translate-x-0",
+        open ? "lg:w-72" : "lg:w-0 lg:overflow-hidden lg:border-l-0",
         // Mobile drawer
         "fixed inset-y-0 right-0 z-40 w-[85vw] max-w-sm",
-        mobileOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"
+        mobileOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
       )}
     >
       {/* Toggle button (desktop only) */}
       <button
         onClick={() => setOpen(!open)}
-        className="hidden md:flex absolute -left-7 top-3 z-10 h-7 w-7 items-center justify-center rounded-l-md border border-r-0 bg-card text-muted-foreground shadow-sm hover:bg-accent"
+        className="hidden lg:flex absolute -left-7 top-3 z-10 h-7 w-7 items-center justify-center rounded-l-md border border-r-0 bg-card text-muted-foreground shadow-sm hover:bg-accent"
         title={open ? "Masquer la légende" : "Afficher la légende"}
       >
         {open ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -270,7 +285,7 @@ function LegendSidebar({
       {/* Mobile close button */}
       <button
         onClick={onMobileClose}
-        className="md:hidden absolute right-3 top-3 z-10 text-muted-foreground hover:text-foreground"
+        className="lg:hidden absolute right-3 top-3 z-10 text-muted-foreground hover:text-foreground"
         aria-label="Fermer"
       >
         <X className="h-4 w-4" />
@@ -313,7 +328,40 @@ function LegendSidebar({
                   </span>
                 </button>
               )}
+
+              {/* Submissions (Kobo) toggle */}
+              <button
+                onClick={onToggleSubmissions}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+              >
+                {showSubmissions ? (
+                  <Eye className="h-4 w-4 text-amber-600" />
+                ) : (
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                )}
+                <MapPin className="h-3.5 w-3.5 text-amber-600" />
+                <span>Soumissions terrain</span>
+              </button>
             </div>
+
+            {/* Sous-légende soumissions par formulaire */}
+            {showSubmissions && Object.keys(submissionCounts).length > 0 && (
+              <div className="mt-2 ml-1 space-y-1 border-l-2 border-muted pl-2">
+                {Object.entries(SUBMISSION_FORM_META).map(([key, meta]) => {
+                  const count = submissionCounts[key] ?? 0;
+                  return (
+                    <div key={key} className="flex items-center gap-2 text-xs">
+                      <span
+                        className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border"
+                        style={{ backgroundColor: meta.color, borderColor: meta.color }}
+                      />
+                      <span className="flex-1 truncate">{meta.label}</span>
+                      <span className="font-mono text-muted-foreground">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* ── Opacité GEE ── */}
@@ -436,9 +484,14 @@ export default function DashboardPage() {
   const [geeOpacity, setGeeOpacity] = useState(0.75);
   const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
   const [mobileLegendOpen, setMobileLegendOpen] = useState(false);
+  const [locations, setLocations] = useState<SubmissionLocation[]>([]);
+  const [showSubmissions, setShowSubmissions] = useState(true);
 
   useEffect(() => {
     getZones().then(setZones).catch(console.error);
+    getLocations()
+      .then((res) => setLocations(res.locations))
+      .catch((e) => console.warn("[locations] indisponibles:", e));
   }, []);
 
   const handleAnalyse = async () => {
@@ -473,7 +526,7 @@ export default function DashboardPage() {
       {/* Mobile backdrop */}
       {(mobileControlsOpen || mobileLegendOpen) && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
           onClick={() => {
             setMobileControlsOpen(false);
             setMobileLegendOpen(false);
@@ -482,7 +535,7 @@ export default function DashboardPage() {
       )}
 
       {/* Mobile floating toggles */}
-      <div className="md:hidden absolute top-3 left-3 z-20 flex gap-2">
+      <div className="lg:hidden absolute top-3 left-3 z-20 flex gap-2">
         <Button
           size="icon"
           variant="secondary"
@@ -492,7 +545,7 @@ export default function DashboardPage() {
           <SlidersHorizontal className="h-4 w-4" />
         </Button>
       </div>
-      <div className="md:hidden absolute top-3 right-3 z-20">
+      <div className="lg:hidden absolute top-3 right-3 z-20">
         <Button
           size="icon"
           variant="secondary"
@@ -508,10 +561,10 @@ export default function DashboardPage() {
         className={cn(
           "shrink-0 border-r bg-card p-4 space-y-4 overflow-y-auto transition-transform duration-200",
           // Desktop
-          "md:relative md:translate-x-0 md:w-80",
+          "lg:relative lg:translate-x-0 lg:w-80",
           // Mobile
           "fixed inset-y-0 left-0 z-40 w-[85vw] max-w-sm",
-          mobileControlsOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          mobileControlsOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         <div className="flex items-center justify-between">
@@ -523,7 +576,7 @@ export default function DashboardPage() {
               {zones.length} zones
             </Badge>
             <button
-              className="md:hidden text-muted-foreground hover:text-foreground"
+              className="lg:hidden text-muted-foreground hover:text-foreground"
               onClick={() => setMobileControlsOpen(false)}
               aria-label="Fermer"
             >
@@ -636,6 +689,49 @@ export default function DashboardPage() {
           {geeResult?.tile_url && showGeeLayer && (
             <GEETileLayer url={geeResult.tile_url} opacity={geeOpacity} />
           )}
+
+          {showSubmissions &&
+            locations.map((loc, idx) => {
+              const meta = SUBMISSION_FORM_META[loc.form_key] ?? { label: loc.form_name, color: "#64748b" };
+              return (
+                <CircleMarker
+                  key={`${loc.form_key}-${loc.submission_id ?? "x"}-${idx}`}
+                  center={[loc.latitude, loc.longitude]}
+                  radius={6}
+                  pathOptions={{
+                    color: meta.color,
+                    weight: 2,
+                    fillColor: meta.color,
+                    fillOpacity: 0.7,
+                  }}
+                >
+                  <Popup>
+                    <div className="text-xs space-y-0.5">
+                      <div className="font-semibold" style={{ color: meta.color }}>
+                        {meta.label}
+                      </div>
+                      <div className="text-muted-foreground">{loc.form_name}</div>
+                      {loc.label && <div><span className="font-medium">Détail :</span> {loc.label}</div>}
+                      <div className="font-mono text-[10px] mt-1">
+                        {loc.latitude.toFixed(5)}, {loc.longitude.toFixed(5)}
+                      </div>
+                      {loc.altitude != null && (
+                        <div className="text-[10px] text-muted-foreground">
+                          Alt. {loc.altitude.toFixed(1)} m
+                          {loc.accuracy != null && ` · ±${loc.accuracy.toFixed(1)} m`}
+                        </div>
+                      )}
+                      {loc.submitted_at && (
+                        <div className="text-[10px] text-muted-foreground">
+                          {new Date(loc.submitted_at).toLocaleString("fr-FR")}
+                        </div>
+                      )}
+                    </div>
+                  </Popup>
+                </CircleMarker>
+              );
+            })}
+
           {analysisZoneGeometry && <ZoomToZone geometry={analysisZoneGeometry} />}
         </MapContainer>
       </div>
@@ -652,6 +748,12 @@ export default function DashboardPage() {
         onOpacityChange={setGeeOpacity}
         mobileOpen={mobileLegendOpen}
         onMobileClose={() => setMobileLegendOpen(false)}
+        showSubmissions={showSubmissions}
+        onToggleSubmissions={() => setShowSubmissions((v) => !v)}
+        submissionCounts={locations.reduce<Record<string, number>>((acc, l) => {
+          acc[l.form_key] = (acc[l.form_key] ?? 0) + 1;
+          return acc;
+        }, {})}
       />
     </div>
   );
