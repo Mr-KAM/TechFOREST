@@ -72,6 +72,9 @@ Variables principales a renseigner :
 | UID_PLANTING_ARBRE | UID formulaire Planting arbre |
 | UID_MENACES | UID formulaire Menaces |
 | CORS_ORIGINS | Origines CORS separees par virgules |
+| DEFAULT_SUPERADMIN_EMAIL / _PASSWORD / _FULLNAME | Compte superadmin cree au bootstrap |
+| DEFAULT_ADMIN_EMAIL / _PASSWORD / _FULLNAME | Compte admin principal cree au bootstrap |
+| DEFAULT_USER_EMAIL / _PASSWORD / _FULLNAME / _ROLE | Compte utilisateur classique (par defaut role `viewer`) |
 
 ## Initialisation de la base
 
@@ -80,10 +83,15 @@ alembic upgrade head
 python -m app.scripts.load_geodata
 ```
 
-Le script de chargement cree aussi un compte admin par defaut :
+Le script de chargement cree aussi 3 comptes par defaut (lus depuis `.env`) :
 
-- Email : techforestadmin@gmail.com
-- Mot de passe : admin123
+| Role | Email (defaut) | Mot de passe (defaut) |
+|---|---|---|
+| superadmin | superadmin@techforest.com | superadmin123 |
+| admin | techforestadmin@gmail.com | admin123 |
+| viewer | user@techforest.com | user123 |
+
+⚠️  Surchargez ces valeurs via le `.env` et changez les mots de passe en production.
 
 ## Lancement
 

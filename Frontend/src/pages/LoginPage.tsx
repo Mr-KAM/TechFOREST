@@ -23,7 +23,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate("/dashboard");
+      navigate("/");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur de connexion");
     } finally {

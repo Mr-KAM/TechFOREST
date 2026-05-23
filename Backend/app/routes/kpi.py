@@ -5,8 +5,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.models.user import User
 from app.schemas.kpi import (
+    EcogardeStats,
+    EcogardesResponse,
+    EcogardeInTeam,
+    ForestsResponse,
+    FormForests,
     FormIndicators,
+    FormIndicatorsByForest,
     GlobalIndicators,
+    IndicatorsByForestResponse,
     KoboDashboard,
     KoboForm,
     KoboSubmission,
@@ -14,16 +21,26 @@ from app.schemas.kpi import (
     KPIValue,
     LocationsResponse,
     SubmissionLocation,
+    TeamStats,
+    TeamsResponse,
+    TeamMissionEntry,
+    TeamMissionsResponse,
 )
 from app.security import get_current_user
 from app.services.kobo_service import (
+    compute_ecogarde_stats,
     compute_form_indicators,
+    compute_form_indicators_by_forest,
+    compute_team_stats,
+    extract_team_missions,
     extract_locations,
+    filter_submissions_by_forest,
     get_form_key,
     get_form_metadata,
     get_form_submissions,
     get_form_submissions_raw,
     list_configured_forms,
+    list_forests_for_form,
     list_forms,
     resolve_form_uid,
 )
@@ -112,10 +129,17 @@ async def get_public_summary():
 
 
 @router.get("/indicators", response_model=GlobalIndicators)
-async def get_all_indicators(current_user: User = Depends(get_current_user)):
+async def get_all_indicators(
+    forest: str | None = Query(
+        default=None,
+        description="Filtrer les indicateurs par forêt (ex. Zaranou, Apouéba)",
+    ),
+    current_user: User = Depends(get_current_user),
+):
     """
     Calcule les indicateurs métier pour les 4 formulaires configurés.
     Utilise l'API REST directe pour les formulaires avec groupes répétés imbriqués.
+    Si `forest` est fourni, restreint le calcul aux soumissions de cette forêt.
     """
     settings = get_settings()
     form_items = [
@@ -130,11 +154,12 @@ async def get_all_indicators(current_user: User = Depends(get_current_user)):
                 _run_sync(get_form_metadata, form_uid),
                 _run_sync(get_form_submissions_raw, form_uid),
             )
-            indicators = compute_form_indicators(form_key, submissions)
+            filtered = filter_submissions_by_forest(form_key, submissions, forest)
+            indicators = compute_form_indicators(form_key, filtered)
             return FormIndicators(
                 form_key=form_key,
                 form_name=metadata.get("name", form_key),
-                total_submissions=len(submissions),
+                total_submissions=len(filtered),
                 indicators=[KPIValue(**i) for i in indicators],
             )
         except Exception as exc:
@@ -184,6 +209,217 @@ async def get_all_locations(
     return LocationsResponse(total=len(locations), locations=locations)
 
 
+@router.get("/forests", response_model=ForestsResponse)
+async def get_forests(current_user: User = Depends(get_current_user)):
+    """
+    Liste les forêts détectées dans les soumissions de chaque formulaire,
+    ainsi que la liste agrégée de toutes les forêts confondues.
+    """
+    settings = get_settings()
+    items = [(k, u) for k, u in settings.kobo_form_uids.items() if u]
+
+    async def _one(key: str, uid: str) -> FormForests:
+        try:
+            metadata, submissions = await asyncio.gather(
+                _run_sync(get_form_metadata, uid),
+                _run_sync(get_form_submissions_raw, uid),
+            )
+            return FormForests(
+                form_key=key,
+                form_name=metadata.get("name", key),
+                forests=list_forests_for_form(key, submissions),
+            )
+        except Exception:
+            return FormForests(form_key=key, form_name=key, forests=[])
+
+    forms = await asyncio.gather(*[_one(k, u) for k, u in items])
+    all_forests = sorted({f for ff in forms for f in ff.forests})
+    return ForestsResponse(forms=list(forms), all_forests=all_forests)
+
+
+@router.get("/indicators/by-forest", response_model=IndicatorsByForestResponse)
+async def get_indicators_by_forest(current_user: User = Depends(get_current_user)):
+    """
+    Calcule les indicateurs métier ventilés par forêt pour chaque formulaire.
+    Utile pour produire des graphiques de synthèse comparatifs.
+    """
+    settings = get_settings()
+    items = [(k, u) for k, u in settings.kobo_form_uids.items() if u]
+
+    async def _one(key: str, uid: str) -> FormIndicatorsByForest:
+        try:
+            metadata, submissions = await asyncio.gather(
+                _run_sync(get_form_metadata, uid),
+                _run_sync(get_form_submissions_raw, uid),
+            )
+            buckets: dict[str, list[dict]] = {}
+            for s in submissions:
+                from app.services.kobo_service import _resolve_forest
+                forest = _resolve_forest(key, s)
+                buckets.setdefault(forest, []).append(s)
+            by_forest_raw = {
+                forest: compute_form_indicators(key, subs)
+                for forest, subs in buckets.items()
+            }
+            return FormIndicatorsByForest(
+                form_key=key,
+                form_name=metadata.get("name", key),
+                total_submissions=len(submissions),
+                by_forest={
+                    forest: [KPIValue(**i) for i in inds]
+                    for forest, inds in by_forest_raw.items()
+                },
+                submissions_by_forest={
+                    forest: len(subs) for forest, subs in buckets.items()
+                },
+            )
+        except Exception:
+            return FormIndicatorsByForest(
+                form_key=key,
+                form_name=key,
+                total_submissions=0,
+                by_forest={},
+                submissions_by_forest={},
+            )
+
+    forms = await asyncio.gather(*[_one(k, u) for k, u in items])
+    return IndicatorsByForestResponse(forms=list(forms))
+
+
+@router.get("/ecogardes", response_model=EcogardesResponse)
+async def get_ecogardes_stats(current_user: User = Depends(get_current_user)):
+    """
+    Statistiques par écogarde (agent collecteur Kobo) sur tous les
+    formulaires configurés :
+    - total_submissions : nombre total de soumissions
+    - total_missions : nombre de jours distincts d'intervention sur le terrain
+    - forms_covered : nombre d'activités auxquelles il a participé
+    - by_form : détail par formulaire
+    """
+    settings = get_settings()
+    items = [(key, uid) for key, uid in settings.kobo_form_uids.items() if uid]
+
+    async def _one(key: str, uid: str) -> tuple[str, str, list[dict]]:
+        try:
+            metadata, submissions = await asyncio.gather(
+                _run_sync(get_form_metadata, uid),
+                _run_sync(get_form_submissions_raw, uid),
+            )
+            return key, metadata.get("name", key), submissions
+        except Exception:
+            return key, key, []
+
+    forms_with_submissions = await asyncio.gather(*[_one(k, u) for k, u in items])
+    raw_stats = compute_ecogarde_stats(list(forms_with_submissions))
+
+    return EcogardesResponse(
+        total_ecogardes=len(raw_stats),
+        total_submissions=sum(e["total_submissions"] for e in raw_stats),
+        total_missions=sum(e["total_missions"] for e in raw_stats),
+        ecogardes=[EcogardeStats(**e) for e in raw_stats],
+    )
+
+
+@router.get("/teams", response_model=TeamsResponse)
+async def get_teams_stats(current_user: User = Depends(get_current_user)):
+    """
+    Statistiques par équipe de terrain sur tous les formulaires configurés.
+    Détecte les équipes et chefs de mission à partir des champs Kobo.
+    Retourne la composition de chaque équipe, les chefs identifiés et les stats par membre.
+    """
+    settings = get_settings()
+    items = [(key, uid) for key, uid in settings.kobo_form_uids.items() if uid]
+
+    async def _one(key: str, uid: str) -> tuple[str, str, list[dict]]:
+        try:
+            metadata, submissions = await asyncio.gather(
+                _run_sync(get_form_metadata, uid),
+                _run_sync(get_form_submissions_raw, uid),
+            )
+            return key, metadata.get("name", key), submissions
+        except Exception:
+            return key, key, []
+
+    forms_with_submissions = await asyncio.gather(*[_one(k, u) for k, u in items])
+    raw_stats = compute_team_stats(list(forms_with_submissions))
+
+    return TeamsResponse(
+        total_teams=len(raw_stats),
+        total_members=sum(len(t["membres"]) for t in raw_stats),
+        total_submissions=sum(t["total_submissions"] for t in raw_stats),
+        teams=[
+            TeamStats(
+                **{**t, "membres": [EcogardeInTeam(**m) for m in t["membres"]]}
+            )
+            for t in raw_stats
+        ],
+    )
+
+
+@router.get("/team-missions", response_model=TeamMissionsResponse)
+async def get_team_missions(current_user: User = Depends(get_current_user)):
+    """
+    Tableau plat des missions par soumission avec les infos d'équipe.
+    Pour chaque soumission : date, activité, forêt, membres et chef d'équipe.
+    Les membres sont lus depuis equipe_collecte/membre_zaranou (ou _apoueba).
+    Le chef est lu depuis equipe_collecte/responsable_zaranou (ou _apoueba).
+    """
+    settings = get_settings()
+    items = [(key, uid) for key, uid in settings.kobo_form_uids.items() if uid]
+
+    async def _one(key: str, uid: str) -> tuple[str, str, list[dict]]:
+        try:
+            metadata, submissions = await asyncio.gather(
+                _run_sync(get_form_metadata, uid),
+                _run_sync(get_form_submissions_raw, uid),
+            )
+            return key, metadata.get("name", key), submissions
+        except Exception:
+            return key, key, []
+
+    forms_with_submissions = await asyncio.gather(*[_one(k, u) for k, u in items])
+    raw = extract_team_missions(list(forms_with_submissions))
+
+    return TeamMissionsResponse(
+        total=len(raw),
+        missions=[TeamMissionEntry(**m) for m in raw],
+    )
+
+
+@router.get("/timeline")
+async def get_timeline(current_user: User = Depends(get_current_user)):
+    """
+    Retourne l'évolution mensuelle du nombre d'observations pour chaque
+    formulaire configuré. Utilise le champ _submission_time de KoboToolbox.
+    Réponse : liste de { month: "AAAA-MM", <form_key>: N, ... } triée par mois.
+    """
+    from collections import defaultdict
+
+    settings = get_settings()
+    items = [(k, u) for k, u in settings.kobo_form_uids.items() if u]
+
+    async def _one(key: str, uid: str) -> tuple[str, list[dict]]:
+        try:
+            submissions = await _run_sync(get_form_submissions_raw, uid)
+            return key, submissions
+        except Exception:
+            return key, []
+
+    results = await asyncio.gather(*[_one(k, u) for k, u in items])
+
+    # Agréger par mois
+    monthly: dict[str, dict[str, int]] = defaultdict(lambda: {k: 0 for k, _ in items})
+    for form_key, submissions in results:
+        for s in submissions:
+            raw_date = s.get("_submission_time", "") or s.get("end", "") or ""
+            if len(raw_date) >= 7:
+                month = raw_date[:7]  # "AAAA-MM"
+                monthly[month][form_key] = monthly[month].get(form_key, 0) + 1
+
+    sorted_months = sorted(monthly.keys())
+    return [{"month": m, **monthly[m]} for m in sorted_months]
+
+
 @router.get("/forms/{form_uid}/submissions", response_model=list[KoboSubmission])
 async def get_submissions(
     form_uid: str,
@@ -192,7 +428,9 @@ async def get_submissions(
     """Récupère les soumissions d'un formulaire KoboToolbox."""
     try:
         resolved_form_uid = await _resolve_form_uid(form_uid)
-        submissions = await _run_sync(get_form_submissions, resolved_form_uid)
+        # On utilise l'API REST brute (pas pykobo) pour supporter les
+        # formulaires avec groupes répétés (faune : Mammiferes, Oiseaux, ...).
+        submissions = await _run_sync(get_form_submissions_raw, resolved_form_uid)
         return [
             KoboSubmission(id=s.get("_id", 0), data=s)
             for s in submissions

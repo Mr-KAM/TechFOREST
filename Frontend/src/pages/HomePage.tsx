@@ -19,39 +19,40 @@ import {
   Play,
   Trees,
   Sprout,
+  LogOut,
 } from "lucide-react";
 
 const STATIC_STATS = [
-  { label: "Zones forestières", value: "2+", icon: Map },
-  { label: "Sécurité", value: "JWT", icon: Shield },
+  { label: "Forêts suivies", value: "2", icon: Map },
+  { label: "Echo-garde impliqué", value: "5", icon: Shield },
 ];
 
 const FEATURES = [
   {
-    title: "Cartographie interactive",
+    title: "Visualisation dynamique des territoires forestiers",
     description:
-      "Carte Leaflet avec superposition de couches Google Earth Engine : couverture, NDVI, perte, occupation du sol.",
+      "Explorez les zones forestières à travers des cartes interactives permettant de mieux comprendre l’occupation du sol, l’évolution de la végétation, les pertes forestières et les dynamiques environnementales.",
     icon: Globe,
     color: "bg-emerald-500/10 text-emerald-500",
   },
   {
-    title: "Analyses satellite",
+    title: "Suivi environnemental des forêts",
     description:
-      "8 analyses : couverture forestière, perte, gain, NDVI, occupation du sol (Dynamic World), altitude, pente, ombrage.",
+      "Analysez l’état des forêts à partir d’indicateurs clés tels que la couverture végétale, les pertes et gains forestiers, l’occupation du sol, le relief, la pente et les zones d’ombrage.",
     icon: Satellite,
     color: "bg-blue-500/10 text-blue-500",
   },
   {
-    title: "Indicateurs terrain",
+    title: "Collecte participative en forêt",
     description:
-      "Connexion KoboToolbox pour suivre les formulaires de collecte et les soumissions terrain en temps réel.",
+      "Suivez en temps réel les observations collectées sur le terrain avec l’appui des communautés locales, afin de renforcer la surveillance des forêts et la prise de décision participative.",
     icon: BarChart3,
     color: "bg-amber-500/10 text-amber-500",
   },
 ];
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { resolved, setTheme } = useTheme();
   const [totalArea, setTotalArea] = useState<number | null>(null);
   const [treesPlanted, setTreesPlanted] = useState<number | null>(null);
@@ -72,8 +73,8 @@ export default function HomePage() {
     totalArea === null
       ? "…"
       : totalArea >= 1000
-        ? `${(totalArea / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })}k`
-        : totalArea.toLocaleString("fr-FR", { maximumFractionDigits: 1 });
+        ? `${(totalArea / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })}k ha`
+        : `${totalArea.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} ha`;
 
   const treesLabel =
     treesPlanted === null
@@ -84,7 +85,7 @@ export default function HomePage() {
 
   const STATS = [
     STATIC_STATS[0],
-    { label: "Superficie suivie (ha)", value: areaLabel, icon: Trees },
+    { label: "Superficie suivie", value: areaLabel, icon: Trees },
     { label: "Arbres reboisés", value: treesLabel, icon: Sprout },
     STATIC_STATS[1],
   ];
@@ -113,11 +114,9 @@ export default function HomePage() {
               {resolved === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
             {user ? (
-              <Link to="/dashboard">
-                <Button size="sm" className="gap-1.5">
-                  Dashboard <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </Link>
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={logout}>
+                <LogOut className="h-3.5 w-3.5" /> Se déconnecter
+              </Button>
             ) : (
               <Link to="/login">
                 <Button size="sm">Se connecter</Button>
@@ -128,7 +127,7 @@ export default function HomePage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section className="relative flex min-h-[85vh] items-center justify-center overflow-hidden pt-14">
+      <section className="relative flex min-h-[85vh] items-center justify-center overflow-hidden pt-28 sm:pt-20 md:pt-14">
         {/* Video background */}
         <video
           autoPlay
@@ -145,17 +144,12 @@ export default function HomePage() {
 
         {/* Content */}
         <div className="relative z-10 mx-auto max-w-4xl px-4 text-center text-white">
-          <Badge variant="secondary" className="mb-6 bg-white/10 text-white/90 backdrop-blur-sm border-white/20">
-            Monitoring forestier par télédétection
-          </Badge>
-
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl">
             Tech<span className="text-primary">FOREST</span>
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/75 sm:text-xl">
-            Plateforme de suivi de la couverture forestière combinant imagerie
-            satellite Google Earth Engine et collecte de données terrain KoboToolbox.
+            Plateforme numérique de suivi des activités de reforestation des forêts communautaires d'Apouéba et de Zaranou
           </p>
 
           {/* Stats */}
@@ -178,7 +172,7 @@ export default function HomePage() {
               <>
                 <Link to="/dashboard">
                   <Button size="lg" className="h-12 gap-2 px-8 text-base">
-                    <Map className="h-5 w-5" /> Accéder au dashboard
+                    <Map className="h-5 w-5" /> Carte interactif
                   </Button>
                 </Link>
                 <Link to="/kpi">
@@ -228,7 +222,7 @@ export default function HomePage() {
           </Badge>
           <h2 className="text-3xl font-bold sm:text-4xl">Tout pour le suivi forestier</h2>
           <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
-            Un système complet alimenté par Google Earth Engine et KoboToolbox pour l'analyse et le monitoring des forêts.
+            Un système complet de Three Level Data Monitoring (3LDM) alimenté par des images satéllitaires, des données de haute résolution prise par drone et des données de térrains de suivi des forêts.
           </p>
         </div>
 

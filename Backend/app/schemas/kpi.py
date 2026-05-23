@@ -67,8 +67,96 @@ class SubmissionLocation(BaseModel):
     altitude: float | None = None
     accuracy: float | None = None
     label: str | None = None  # Étiquette descriptive (ex. type de menace, espèce)
+    image_url: str | None = None  # URL de la première image jointe à la soumission
 
 
 class LocationsResponse(BaseModel):
     total: int
     locations: list[SubmissionLocation]
+
+
+class EcogardeStats(BaseModel):
+    """Statistiques agrégées pour un écogarde."""
+    username: str
+    total_submissions: int
+    total_missions: int
+    forms_covered: int
+    by_form: dict[str, int]
+
+
+class EcogardesResponse(BaseModel):
+    total_ecogardes: int
+    total_submissions: int
+    total_missions: int
+    ecogardes: list[EcogardeStats]
+
+
+class FormForests(BaseModel):
+    """Liste des forêts détectées dans les soumissions d'un formulaire."""
+    form_key: str
+    form_name: str
+    forests: list[str]
+
+
+class ForestsResponse(BaseModel):
+    forms: list[FormForests]
+    all_forests: list[str]
+
+
+class FormIndicatorsByForest(BaseModel):
+    """Indicateurs ventilés par forêt pour un formulaire."""
+    form_key: str
+    form_name: str
+    total_submissions: int
+    by_forest: dict[str, list[KPIValue]]
+    submissions_by_forest: dict[str, int]
+
+
+class IndicatorsByForestResponse(BaseModel):
+    forms: list[FormIndicatorsByForest]
+
+
+# ─── Équipes de terrain ───────────────────────────────────────
+
+
+class EcogardeInTeam(BaseModel):
+    """Statistiques d'un écogarde membre d'une équipe de terrain."""
+    username: str
+    total_submissions: int
+    total_missions: int
+    forms_covered: int
+
+
+class TeamStats(BaseModel):
+    """Statistiques agrégées pour une équipe de terrain."""
+    team_name: str
+    chefs_mission: list[str]
+    membres: list[EcogardeInTeam]
+    total_submissions: int
+    total_missions: int
+    forms_covered: int
+
+
+class TeamsResponse(BaseModel):
+    total_teams: int
+    total_members: int
+    total_submissions: int
+    teams: list[TeamStats]
+
+
+# ─── Tableau de missions par équipe ──────────────────────────
+
+
+class TeamMissionEntry(BaseModel):
+    """Une mission (soumission) avec les infos d'équipe extraites."""
+    date_mission: str | None = None
+    activite: str
+    activite_label: str
+    foret: str
+    membres: list[str]
+    chef_equipe: str | None = None
+
+
+class TeamMissionsResponse(BaseModel):
+    total: int
+    missions: list[TeamMissionEntry]

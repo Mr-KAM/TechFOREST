@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isSuperadmin, isAdmin } from "@/lib/auth";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "@/lib/useTheme";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
   TreePine,
   Map,
   BarChart3,
+  Database,
   LogOut,
   Home,
   Sun,
@@ -32,6 +33,7 @@ import {
   Search,
   Bell,
   Settings,
+  ShieldCheck,
   User,
   ChevronRight,
 } from "lucide-react";
@@ -41,6 +43,14 @@ const NAV_ITEMS = [
   { to: "/", icon: Home, label: "Accueil" },
   { to: "/dashboard", icon: Map, label: "Carte & Analyse" },
   { to: "/kpi", icon: BarChart3, label: "Suivi des indicateurs" },
+];
+
+const SUPERADMIN_NAV_ITEMS = [
+  { to: "/data", icon: Database, label: "Tableau des données" },
+];
+
+const ADMIN_NAV_ITEMS = [
+  { to: "/admin", icon: ShieldCheck, label: "Administration" },
 ];
 
 function SidebarLink({
@@ -142,6 +152,40 @@ export default function AppLayout() {
                 active={location.pathname === item.to}
               />
             ))}
+            {isAdmin(user) && (
+              <>
+                {isSuperadmin(user) && (
+                  <>
+                    {!collapsed && (
+                      <span className="mt-3 block px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted">
+                        Superadmin
+                      </span>
+                    )}
+                    {SUPERADMIN_NAV_ITEMS.map((item) => (
+                      <SidebarLink
+                        key={item.to}
+                        {...item}
+                        collapsed={collapsed}
+                        active={location.pathname === item.to}
+                      />
+                    ))}
+                  </>
+                )}
+                {!collapsed && (
+                  <span className="mt-3 block px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted">
+                    {isSuperadmin(user) ? "Administration" : "Admin"}
+                  </span>
+                )}
+                {ADMIN_NAV_ITEMS.map((item) => (
+                  <SidebarLink
+                    key={item.to}
+                    {...item}
+                    collapsed={collapsed}
+                    active={location.pathname === item.to}
+                  />
+                ))}
+              </>
+            )}
           </nav>
 
           <Separator className="bg-sidebar-border" />
@@ -155,6 +199,20 @@ export default function AppLayout() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user?.full_name}</p>
                 <p className="text-[11px] text-sidebar-muted truncate">{user?.email}</p>
+                {user?.role && (
+                  <span
+                    className={cn(
+                      "mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                      user.role === "superadmin"
+                        ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                        : user.role === "admin"
+                        ? "bg-primary/20 text-primary"
+                        : "bg-sidebar-accent text-sidebar-muted"
+                    )}
+                  >
+                    {user.role}
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -258,7 +316,7 @@ export default function AppLayout() {
 
         {/* ── Bottom navigation (mobile + tablette) ── */}
         <nav className="hidden max-lg:flex fixed bottom-0 inset-x-0 z-40 h-16 items-stretch border-t bg-sidebar text-sidebar-foreground shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
-          {NAV_ITEMS.map((item) => {
+          {[...NAV_ITEMS, ...(isAdmin(user) ? [{ to: "/admin", icon: ShieldCheck, label: "Admin" }] : [])].map((item) => {
             const active = location.pathname === item.to;
             const Icon = item.icon;
             return (

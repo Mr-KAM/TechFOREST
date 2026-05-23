@@ -3,14 +3,18 @@ FROM python:3.12-slim
 # PostGIS client libs needed by psycopg2 and GeoAlchemy2
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        libpq-dev gcc libgeos-dev libproj-dev && \
+        libpq-dev gcc libgeos-dev libproj-dev nodejs npm && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install dependencies first (layer cache)
-COPY Backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install backend dependencies first (layer cache)
+COPY Backend/requirements.txt ./Backend/requirements.txt
+RUN pip install --no-cache-dir -r Backend/requirements.txt
+
+# Install frontend dependencies first (layer cache)
+COPY Frontend/package*.json ./Frontend/
+RUN npm ci --prefix Frontend
 
 # Copy backend source and data
 COPY Backend/app ./app
@@ -19,8 +23,14 @@ COPY Backend/alembic.ini .
 COPY Backend/data ./data
 COPY Backend/service-account-key-gee-true.json ./service-account-key-gee-true.json
 
-# Port exposed by uvicorn
-EXPOSE 8000
+# Copy frontend source (without host node_modules)
+COPY Frontend/index.html ./Frontend/index.html
+COPY Frontend/tsconfig.json ./Frontend/tsconfig.json
+COPY Frontend/vite.config.ts ./Frontend/vite.config.ts
+COPY Frontend/src ./Frontend/src
 
-# Run migrations then start the API
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+# Ports exposed by API and Vite frontend
+EXPOSE 8000 5173
+
+# Run migrations, then start backend and frontend concurrently
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 & BACK_PID=$!; npm run dev --prefix Frontend -- --host 0.0.0.0 --port 5173 & FRONT_PID=$!; trap 'kill $BACK_PID $FRONT_PID 2>/dev/null' TERM INT; while kill -0 $BACK_PID 2>/dev/null && kill -0 $FRONT_PID 2>/dev/null; do sleep 1; done; kill $BACK_PID $FRONT_PID 2>/dev/null; wait $BACK_PID $FRONT_PID 2>/dev/null"]

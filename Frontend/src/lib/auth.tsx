@@ -54,3 +54,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   return useContext(AuthContext);
 }
+
+// ─── Helpers de rôle ────────────────────────────────────────
+
+export const ROLES = {
+  SUPERADMIN: "superadmin",
+  ADMIN: "admin",
+  EDITOR: "editor",
+  VIEWER: "viewer",
+} as const;
+
+export function hasRole(user: UserProfile | null, ...roles: string[]): boolean {
+  if (!user) return false;
+  // Le superadmin a accès à tout
+  if (user.role === ROLES.SUPERADMIN) return true;
+  return roles.includes(user.role);
+}
+
+export function isSuperadmin(user: UserProfile | null): boolean {
+  return user?.role === ROLES.SUPERADMIN;
+}
+
+export function isAdmin(user: UserProfile | null): boolean {
+  return user?.role === ROLES.ADMIN || user?.role === ROLES.SUPERADMIN;
+}

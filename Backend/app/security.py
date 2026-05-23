@@ -14,6 +14,16 @@ settings = get_settings()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
+# ─── Rôles applicatifs ────────────────────────────────────────
+ROLE_SUPERADMIN = "superadmin"
+ROLE_ADMIN = "admin"
+ROLE_EDITOR = "editor"
+ROLE_VIEWER = "viewer"
+
+ALLOWED_ROLES: set[str] = {ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_EDITOR, ROLE_VIEWER}
+# Rôles "privilégiés" : non attribuables via /register public
+PRIVILEGED_ROLES: set[str] = {ROLE_SUPERADMIN, ROLE_ADMIN}
+
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
@@ -57,3 +67,41 @@ def get_current_user(
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Utilisateur désactivé")
     return user
+
+
+def require_roles(*roles: str):
+    """
+    Dépendance FastAPI : restreint l'accès aux utilisateurs ayant l'un des rôles donnés.
+    Le rôle superadmin a toujours accès.
+    """
+    allowed = set(roles) | {ROLE_SUPERADMIN}
+
+    def _checker(current_user=Depends(get_current_user)):
+        if current_user.role not in allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Permissions insuffisantes",
+            )
+        return current_user
+
+    return _checker
+
+
+def require_superadmin(current_user=Depends(get_current_user)):
+    """Dépendance FastAPI : restreint l'accès au rôle superadmin uniquement."""
+    if current_user.role != ROLE_SUPERADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès réservé au superadministrateur",
+        )
+    return current_user
+
+
+def require_admin_or_above(current_user=Depends(get_current_user)):
+    """Dépendance FastAPI : restreint l'accès aux rôles admin et superadmin."""
+    if current_user.role not in (ROLE_ADMIN, ROLE_SUPERADMIN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès réservé aux administrateurs",
+        )
+    return current_user

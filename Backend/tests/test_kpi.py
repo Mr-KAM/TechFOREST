@@ -52,7 +52,7 @@ class TestForms:
 class TestSubmissions:
     """GET /api/kpi/forms/{uid}/submissions"""
 
-    @patch("app.routes.kpi.get_form_submissions", return_value=FAKE_SUBMISSIONS)
+    @patch("app.routes.kpi.get_form_submissions_raw", return_value=FAKE_SUBMISSIONS)
     def test_get_submissions(self, mock_subs, client, auth_headers):
         resp = client.get("/api/kpi/forms/aBC123/submissions", headers=auth_headers)
         assert resp.status_code == 200
@@ -66,7 +66,7 @@ class TestSubmissions:
         assert resp.status_code == 401
 
     @patch("app.routes.kpi.resolve_form_uid", return_value="configured-menaces-uid")
-    @patch("app.routes.kpi.get_form_submissions", return_value=FAKE_SUBMISSIONS)
+    @patch("app.routes.kpi.get_form_submissions_raw", return_value=FAKE_SUBMISSIONS)
     def test_submissions_with_form_key(self, mock_subs, mock_resolve, client, auth_headers):
         resp = client.get("/api/kpi/forms/menaces/submissions", headers=auth_headers)
         assert resp.status_code == 200
@@ -77,7 +77,7 @@ class TestSubmissions:
 class TestDashboard:
     """GET /api/kpi/forms/{uid}/dashboard"""
 
-    @patch("app.routes.kpi.get_form_submissions", return_value=FAKE_SUBMISSIONS)
+    @patch("app.routes.kpi.get_form_submissions_raw", return_value=FAKE_SUBMISSIONS)
     @patch("app.routes.kpi.get_form_metadata", return_value=FAKE_METADATA)
     def test_dashboard_auto_indicators(self, mock_meta, mock_subs, client, auth_headers):
         resp = client.get("/api/kpi/forms/aBC123/dashboard", headers=auth_headers)
@@ -93,7 +93,7 @@ class TestDashboard:
         assert "surface_mean" in names
         assert "arbres_sum" in names
 
-    @patch("app.routes.kpi.get_form_submissions", return_value=FAKE_SUBMISSIONS)
+    @patch("app.routes.kpi.get_form_submissions_raw", return_value=FAKE_SUBMISSIONS)
     @patch("app.routes.kpi.get_form_metadata", return_value=FAKE_METADATA)
     def test_dashboard_specific_fields(self, mock_meta, mock_subs, client, auth_headers):
         resp = client.get("/api/kpi/forms/aBC123/dashboard?fields=surface", headers=auth_headers)
@@ -104,7 +104,7 @@ class TestDashboard:
         assert all("surface" in n for n in names)
         assert not any("arbres" in n for n in names)
 
-    @patch("app.routes.kpi.get_form_submissions", return_value=[])
+    @patch("app.routes.kpi.get_form_submissions_raw", return_value=[])
     @patch("app.routes.kpi.get_form_metadata", return_value=FAKE_METADATA)
     def test_dashboard_no_submissions(self, mock_meta, mock_subs, client, auth_headers):
         resp = client.get("/api/kpi/forms/aBC123/dashboard", headers=auth_headers)
@@ -114,7 +114,7 @@ class TestDashboard:
         assert data["indicators"] == []
 
     @patch("app.routes.kpi.resolve_form_uid", return_value="configured-menaces-uid")
-    @patch("app.routes.kpi.get_form_submissions", return_value=FAKE_SUBMISSIONS)
+    @patch("app.routes.kpi.get_form_submissions_raw", return_value=FAKE_SUBMISSIONS)
     @patch("app.routes.kpi.get_form_metadata", return_value=FAKE_METADATA)
     def test_dashboard_with_form_key(self, mock_meta, mock_subs, mock_resolve, client, auth_headers):
         resp = client.get("/api/kpi/forms/menaces/dashboard", headers=auth_headers)

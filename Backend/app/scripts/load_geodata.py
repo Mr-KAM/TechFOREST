@@ -76,29 +76,65 @@ def load_forest_zones(geojson_path: str):
         db.close()
 
 
+def _ensure_user(db, *, email: str, password: str, full_name: str, role: str):
+    """Crée un utilisateur s'il n'existe pas (par email)."""
+    from app.security import hash_password, ALLOWED_ROLES, ROLE_VIEWER
+
+    email = (email or "").strip().lower()
+    if not email or not password:
+        print(f"  [SKIP] Compte '{role}' non configuré (.env vide)")
+        return
+
+    role = role if role in ALLOWED_ROLES else ROLE_VIEWER
+
+    existing = db.query(User).filter(User.email == email).first()
+    if existing:
+        print(f"  [SKIP] Compte {role} existant : {existing.email}")
+        return
+
+    user = User(
+        email=email,
+        full_name=full_name,
+        hashed_password=hash_password(password),
+        role=role,
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+    print(f"  [OK] Compte {role} créé : {email} / {password}")
+    print("  ⚠️  Changez ce mot de passe en production !")
+
+
 def create_admin_user():
-    """Crée un utilisateur admin par défaut si aucun n'existe."""
-    from app.security import hash_password
+    """Crée les comptes superadmin, admin et utilisateur classique par défaut.
+
+    Les identifiants sont lus depuis le fichier .env (DEFAULT_*).
+    """
+    from app.security import ROLE_SUPERADMIN, ROLE_ADMIN
 
     db = _SessionLocal()
     try:
-        existing = db.query(User).filter(User.role == "admin").first()
-        if existing:
-            print(f"  [SKIP] Admin existant : {existing.email}")
-            return
-
-        admin = User(
-            email="techforestadmin@gmail.com",
-            full_name="Administrateur TechFOREST",
-            hashed_password=hash_password("admin123"),
-            role="admin",
-            is_active=True,
+        _ensure_user(
+            db,
+            email=settings.DEFAULT_SUPERADMIN_EMAIL,
+            password=settings.DEFAULT_SUPERADMIN_PASSWORD,
+            full_name=settings.DEFAULT_SUPERADMIN_FULLNAME,
+            role=ROLE_SUPERADMIN,
         )
-        db.add(admin)
-        db.commit()
-        print("  [OK] Admin créé : techforestadmin@gmail.com / admin123")
-        print("  ⚠️  Changez ce mot de passe en production !")
-
+        _ensure_user(
+            db,
+            email=settings.DEFAULT_ADMIN_EMAIL,
+            password=settings.DEFAULT_ADMIN_PASSWORD,
+            full_name=settings.DEFAULT_ADMIN_FULLNAME,
+            role=ROLE_ADMIN,
+        )
+        _ensure_user(
+            db,
+            email=settings.DEFAULT_USER_EMAIL,
+            password=settings.DEFAULT_USER_PASSWORD,
+            full_name=settings.DEFAULT_USER_FULLNAME,
+            role=settings.DEFAULT_USER_ROLE,
+        )
     except Exception as e:
         db.rollback()
         print(f"  [ERREUR] {e}")

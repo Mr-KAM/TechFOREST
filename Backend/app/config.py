@@ -35,6 +35,21 @@ class Settings(BaseSettings):
     APP_NAME: str = "TechFOREST API"
     DEBUG: bool = True
 
+    # Comptes par défaut créés au bootstrap (script load_geodata)
+    # Superadministrateur
+    DEFAULT_SUPERADMIN_EMAIL: str = "superadmin@techforest.com"
+    DEFAULT_SUPERADMIN_PASSWORD: str = "superadmin123"
+    DEFAULT_SUPERADMIN_FULLNAME: str = "Super Administrateur TechFOREST"
+    # Administrateur principal
+    DEFAULT_ADMIN_EMAIL: str = "techforestadmin@gmail.com"
+    DEFAULT_ADMIN_PASSWORD: str = "admin123"
+    DEFAULT_ADMIN_FULLNAME: str = "Administrateur TechFOREST"
+    # Utilisateur classique (viewer) du compte principal
+    DEFAULT_USER_EMAIL: str = "user@techforest.com"
+    DEFAULT_USER_PASSWORD: str = "user123"
+    DEFAULT_USER_FULLNAME: str = "Utilisateur TechFOREST"
+    DEFAULT_USER_ROLE: str = "viewer"
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
     @property
