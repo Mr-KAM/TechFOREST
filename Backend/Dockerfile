@@ -45,19 +45,27 @@ COPY alembic  ./alembic
 COPY alembic.ini ./alembic.ini
 COPY data     ./data
 
+# --- Entrypoint (migrations + seed + démarrage) ------------------------
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+
 # --- Utilisateur non-root ----------------------------------------------
 RUN groupadd --system --gid 1000 app \
     && useradd  --system --uid 1000 --gid app --home /app --shell /usr/sbin/nologin app \
-    && chown -R app:app /app
+    && chown -R app:app /app \
+    && chmod +x /app/docker-entrypoint.sh
 USER app
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD curl --fail --silent --show-error http://127.0.0.1:8000/health || exit 1
 
-# Migrations séparées : exécuter manuellement avant le démarrage si besoin.
-#   docker run --env-file .env techforest-backend alembic upgrade head
+# Au démarrage du conteneur :
+#   1. alembic upgrade head      (migrations DB)
+#   2. load_geodata               (PostGIS + zones + comptes par défaut)
+#   3. uvicorn                    (API)
+# load_geodata est idempotent : il ne re-crée pas les objets déjà existants.
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", \
      "--host", "0.0.0.0", \
      "--port", "8000", \
