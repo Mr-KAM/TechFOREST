@@ -1,0 +1,31 @@
+# Secrets et clés – ne JAMAIS inclure dans l'image
+.env
+.env.*
+!.env.example
+*service-account*.json
+*credentials*.json
+*-key.json
+
+# Artefacts Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Tests (inutiles en prod)
+tests/
+
+# Alembic versions déjà incluses via le répertoire alembic/
+# (rien à exclure ici)
+
+# Outils de dev
+.venv/
+venv/
+*.log
+*.sqlite
+*.db

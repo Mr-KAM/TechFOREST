@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -7,6 +8,7 @@ from fastapi.responses import JSONResponse
 from geoalchemy2.shape import to_shape
 from sqlalchemy.orm import Session
 
+from app.concurrency import run_sync
 from app.config import get_settings
 from app.database import get_db
 from app.models.forest import ForestZone, GEELayer
@@ -109,7 +111,7 @@ def create_zone(
 # ─── GEE Clip / Analyse ──────────────────────────────────────
 
 @router.post("/gee/clip", response_model=GEEClipResponse)
-def clip_gee_layer(
+async def clip_gee_layer(
     payload: GEEClipRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -146,7 +148,9 @@ def clip_gee_layer(
             kwargs["year_end"] = int(payload.date_end[:4])
 
     try:
-        result = handler(geometry_geojson, **kwargs)
+        result = await run_sync(handler, geometry_geojson, timeout=120, **kwargs)
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=504, detail="Google Earth Engine : timeout (120s)")
     except Exception as exc:
         logger.exception("Erreur GEE clip (%s)", payload.layer_type)
         raise HTTPException(status_code=502, detail=f"Erreur Google Earth Engine : {exc}")

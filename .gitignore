@@ -33,6 +33,20 @@ build/
 .env
 !.env.example
 
+# Secrets (cles, credentials, comptes de service)
+*service-account*.json
+*credentials*.json
+*-key.json
+*.pem
+*.key
+!package-lock.json
+
+# Donnees / metadata QGIS
+*.qmd
+
+# Vite caches
+vite.config.*.timestamp-*.mjs
+
 # Logs
 *.log
 npm-debug.log*
@@ -45,4 +59,5 @@ npm-debug.log*
 # Frontend/
 Frontend/node_modules/
 
+# Frontend PHP supprime du projet
 Frontend_php/

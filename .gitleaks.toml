@@ -1,0 +1,25 @@
+# Configuration Gitleaks pour TechFOREST
+# Voir https://github.com/gitleaks/gitleaks#configuration
+
+title = "TechFOREST gitleaks config"
+
+[extend]
+# Heriter de toutes les regles par defaut (AWS, GCP, Stripe, Slack, etc.)
+useDefault = true
+
+[allowlist]
+description = "Fichiers et chemins exemptes de scan"
+paths = [
+  '''(.*?)(jpg|jpeg|png|gif|svg|webp|ico)$''',
+  '''package-lock\.json$''',
+  '''composer\.lock$''',
+  '''Backend/\.env\.example$''',
+  '''\.pre-commit-config\.yaml$''',
+  '''\.gitleaks\.toml$''',
+]
+# Les placeholders documentes ne doivent pas declencher d'alerte
+regexes = [
+  '''change-me-to-a-random-secret-key-in-production''',
+  '''your-gee-project-id''',
+  '''test-secret-key-for-unit-tests''',
+]

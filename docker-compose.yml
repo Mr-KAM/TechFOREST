@@ -1,45 +1,88 @@
+# =============================================================================
+# TechFOREST - docker-compose
+# Services :
+#   - db        : PostgreSQL + PostGIS
+#   - migrate   : Job one-shot `alembic upgrade head` (separe du runtime app)
+#   - app       : API FastAPI (image multi-stage, non-root, healthcheck)
+# Le frontend React est build dans l'image et servi en statique par l'API.
+# =============================================================================
+
 services:
   db:
     image: postgis/postgis:16-3.4
     container_name: techforest-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: techforest
-      POSTGRES_PASSWORD: techforest
-      POSTGRES_DB: techforest_db
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${DB_USER:-techforest}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      POSTGRES_DB: ${DB_NAME:-techforest_db}
+    # Port non expose par defaut. Decommenter uniquement en local pour
+    # se connecter avec un client externe (psql, DBeaver, ...).
+    # ports:
+    #   - "5432:5432"
     volumes:
       - techforest_db_data:/var/lib/postgresql/data
       - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U techforest -d techforest_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-techforest} -d ${DB_NAME:-techforest_db}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  # ─── Backend FastAPI + Frontend React (Vite) ─────────────────
+  # ---------------------------------------------------------------------------
+  # Job one-shot : applique les migrations Alembic puis se termine (exit 0).
+  # L'app NE demarre que si ce job a reussi (depends_on.service_completed_successfully).
+  # ---------------------------------------------------------------------------
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: techforest-app:latest
+    container_name: techforest-migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - Backend/.env
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-techforest}:${DB_PASSWORD}@db:5432/${DB_NAME:-techforest_db}
+      DIRECT_URL: postgresql://${DB_USER:-techforest}:${DB_PASSWORD}@db:5432/${DB_NAME:-techforest_db}
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+
+  # ---------------------------------------------------------------------------
+  # API FastAPI (sert aussi le bundle Vite/React build via /static).
+  # ---------------------------------------------------------------------------
   app:
     build:
       context: .
       dockerfile: Dockerfile
+    image: techforest-app:latest
     container_name: techforest-app
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://techforest:techforest@db:5432/techforest_db
-      DIRECT_URL: postgresql://techforest:techforest@db:5432/techforest_db
-    # Variables Kobo / GEE / JWT chargees depuis Backend/.env
-    # (creer Backend/.env a partir de Backend/.env.example)
+      migrate:
+        condition: service_completed_successfully
     env_file:
       - Backend/.env
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-techforest}:${DB_PASSWORD}@db:5432/${DB_NAME:-techforest_db}
+      DIRECT_URL: postgresql://${DB_USER:-techforest}:${DB_PASSWORD}@db:5432/${DB_NAME:-techforest_db}
     ports:
       - "8000:8000"
-      - "5173:5173"
     volumes:
-      # Credentials GEE montes en lecture seule (pas embarques dans l'image)
+      # Credentials GEE jamais embarques dans l'image, montes en lecture seule.
+      # Le chemin source doit exister localement (ou etre fourni par Dokploy via
+      # un secret/file mount).
       - ./Backend/service-account-key-gee-true.json:/app/service-account-key-gee-true.json:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
 
 volumes:
   techforest_db_data:

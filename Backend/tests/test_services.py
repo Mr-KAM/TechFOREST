@@ -1,6 +1,6 @@
-"""Tests unitaires – services (kobo_service.compute_indicators)."""
+﻿"""Tests unitaires â€“ services (kobo_service.compute_form_indicators)."""
 
-from app.services.kobo_service import compute_indicators
+from app.services.kobo_service import compute_form_indicators as compute_indicators
 
 
 class TestComputeIndicators:
@@ -11,9 +11,9 @@ class TestComputeIndicators:
             {"_id": 1, "surface": "2.5", "arbres": "100", "commentaire": "ok"},
             {"_id": 2, "surface": "3.0", "arbres": "150", "commentaire": "bon"},
         ]
-        result = compute_indicators(submissions)
+        result = compute_indicators(None, submissions)
         names = [i["indicator_name"] for i in result]
-        # Doit détecter "surface" et "arbres" comme numériques
+        # Doit dÃ©tecter "surface" et "arbres" comme numÃ©riques
         assert "surface_count" in names
         assert "surface_sum" in names
         assert "surface_mean" in names
@@ -28,7 +28,7 @@ class TestComputeIndicators:
             {"surface": "2.5", "arbres": "100"},
             {"surface": "3.0", "arbres": "150"},
         ]
-        result = compute_indicators(submissions, numeric_fields=["surface"])
+        result = compute_indicators(None, submissions, numeric_fields=["surface"])
         names = [i["indicator_name"] for i in result]
         assert "surface_count" in names
         assert "arbres_count" not in names
@@ -39,7 +39,7 @@ class TestComputeIndicators:
             {"val": "20"},
             {"val": "30"},
         ]
-        result = compute_indicators(submissions, numeric_fields=["val"])
+        result = compute_indicators(None, submissions, numeric_fields=["val"])
         mean_ind = next(i for i in result if i["indicator_name"] == "val_mean")
         assert mean_ind["value"] == 20.0
 
@@ -49,7 +49,7 @@ class TestComputeIndicators:
             {"val": "20"},
             {"val": "30"},
         ]
-        result = compute_indicators(submissions, numeric_fields=["val"])
+        result = compute_indicators(None, submissions, numeric_fields=["val"])
         sum_ind = next(i for i in result if i["indicator_name"] == "val_sum")
         assert sum_ind["value"] == 60.0
 
@@ -57,22 +57,22 @@ class TestComputeIndicators:
         submissions = [
             {"val": "10"},
             {"val": "20"},
-            {"val": "invalid"},  # pas numérique
+            {"val": "invalid"},  # pas numÃ©rique
         ]
-        result = compute_indicators(submissions, numeric_fields=["val"])
+        result = compute_indicators(None, submissions, numeric_fields=["val"])
         count_ind = next(i for i in result if i["indicator_name"] == "val_count")
         assert count_ind["value"] == 2  # seulement 2 valeurs valides
 
     def test_empty_submissions(self):
-        result = compute_indicators([])
+        result = compute_indicators(None, [])
         assert result == []
 
     def test_no_numeric_values(self):
         submissions = [
-            {"nom": "forêt A"},
-            {"nom": "forêt B"},
+            {"nom": "forÃªt A"},
+            {"nom": "forÃªt B"},
         ]
-        result = compute_indicators(submissions)
+        result = compute_indicators(None, submissions)
         assert result == []
 
     def test_missing_field_in_some_submissions(self):
@@ -81,7 +81,8 @@ class TestComputeIndicators:
             {},  # pas de surface
             {"surface": "3.0"},
         ]
-        result = compute_indicators(submissions, numeric_fields=["surface"])
+        result = compute_indicators(None, submissions, numeric_fields=["surface"])
         # La soumission vide a surface=0 via .get(field, 0)
         count_ind = next(i for i in result if i["indicator_name"] == "surface_count")
         assert count_ind["value"] == 3
+

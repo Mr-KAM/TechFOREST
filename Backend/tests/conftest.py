@@ -13,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 os.environ.update({
     "DATABASE_URL": "sqlite:///:memory:",
     "DIRECT_URL": "",
-    "SECRET_KEY": "test-secret-key-for-unit-tests",
+    "SECRET_KEY": "test-secret-key-for-unit-tests-please-use-32-plus-chars",
     "ALGORITHM": "HS256",
     "ACCESS_TOKEN_EXPIRE_MINUTES": "30",
     "GEE_CREDENTIALS_FILE": "fake-creds.json",

@@ -77,12 +77,16 @@ def load_forest_zones(geojson_path: str):
 
 
 def _ensure_user(db, *, email: str, password: str, full_name: str, role: str):
-    """Crée un utilisateur s'il n'existe pas (par email)."""
+    """Crée un utilisateur s'il n'existe pas (par email).
+
+    Ne fait RIEN si email ou password sont vides: aucun compte
+    par défaut n'est créé silencieusement.
+    """
     from app.security import hash_password, ALLOWED_ROLES, ROLE_VIEWER
 
     email = (email or "").strip().lower()
     if not email or not password:
-        print(f"  [SKIP] Compte '{role}' non configuré (.env vide)")
+        print(f"  [SKIP] Compte '{role}' non configuré (variables d'env absentes)")
         return
 
     role = role if role in ALLOWED_ROLES else ROLE_VIEWER
@@ -101,8 +105,8 @@ def _ensure_user(db, *, email: str, password: str, full_name: str, role: str):
     )
     db.add(user)
     db.commit()
-    print(f"  [OK] Compte {role} créé : {email} / {password}")
-    print("  ⚠️  Changez ce mot de passe en production !")
+    print(f"  [OK] Compte {role} créé : {email}")
+    print("  ⚠️  Pensez à changer ce mot de passe immédiatement.")
 
 
 def create_admin_user():

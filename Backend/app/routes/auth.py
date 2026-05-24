@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.limiter import limiter
 from app.models.user import User
 from app.schemas.auth import Token, UserCreate, UserRead, UserUpdate
 from app.security import (
@@ -21,7 +22,8 @@ router = APIRouter(prefix="/api/auth", tags=["Authentification"])
 
 
 @router.post("/register", response_model=UserRead, status_code=201)
-def register(payload: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def register(request: Request, payload: UserCreate, db: Session = Depends(get_db)):
     """
     Créer un nouveau compte utilisateur.
     L'inscription publique ne permet pas de créer un compte privilégié
@@ -50,7 +52,9 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
+@limiter.limit("5/minute")
 def login(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):

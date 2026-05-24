@@ -1,7 +1,8 @@
 import asyncio
-from functools import partial
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+
+from app.concurrency import run_sync
 
 from app.models.user import User
 from app.schemas.kpi import (
@@ -59,8 +60,7 @@ router = APIRouter(prefix="/api/kpi", tags=["KPI & KoboToolbox"])
 
 async def _run_sync(func, *args, **kwargs):
     """Exécute une fonction synchrone (pykobo) dans un thread pool."""
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, partial(func, *args, **kwargs))
+    return await run_sync(func, *args, **kwargs)
 
 
 async def _resolve_form_uid(form_identifier: str) -> str:
