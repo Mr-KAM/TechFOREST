@@ -130,9 +130,33 @@ Documentation API :
 
 ### KPI / KoboToolbox
 
+#### Vue globale
+
 - GET /api/kpi/forms
 - GET /api/kpi/forms/configured
 - GET /api/kpi/dashboard
+- GET /api/kpi/public/summary
+- GET /api/kpi/indicators
+- GET /api/kpi/indicators/by-forest
+- GET /api/kpi/locations
+- GET /api/kpi/forests
+- GET /api/kpi/timeline
+
+#### Breakdowns par formulaire
+
+- GET /api/kpi/reboisement/breakdowns
+- GET /api/kpi/planting/breakdowns
+- GET /api/kpi/faune/breakdowns
+- GET /api/kpi/menaces/breakdowns
+
+#### Equipes et ecogardes
+
+- GET /api/kpi/ecogardes
+- GET /api/kpi/teams
+- GET /api/kpi/team-missions
+
+#### Acces direct par formulaire
+
 - GET /api/kpi/forms/{form_uid}/submissions
 - GET /api/kpi/forms/{form_uid}/dashboard
 
@@ -161,6 +185,8 @@ video_key supportes : drone, presentation
 - Le backend utilise pykobo pour interroger KoboToolbox.
 - pykobo est synchrone, donc les appels sont executes dans un thread pool via run_in_executor.
 - Les dashboards KPI calculent automatiquement count/sum/mean pour les champs numeriques (ou un sous-ensemble via query param fields).
+- Les endpoints `*/breakdowns` agregent les soumissions par formulaire et exposent des indicateurs metiers (top especes, surface par foret, type de reboisement, etc.) consommes par le dashboard React.
+- Le formulaire `planting_arbre` lit la foret communautaire dans `metadonnees_collecte/equipe_collecte/foret_communautaire` et calcule 29 indicateurs + 13 breakdowns specifiques (especes, parcelles, responsables, organismes donateurs, timeline, coherence declares vs comptes).
 
 ## Tests
 

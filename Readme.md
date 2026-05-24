@@ -6,7 +6,6 @@ Plateforme de suivi forestier combinant cartographie web, analyses Google Earth 
 
 - **Backend** : API FastAPI (auth JWT, cartographie GEE, KPI Kobo, medias)
 - **Frontend** : SPA React/Vite (dashboard carto, KPI)
-- **Frontend_php** : application Laravel 11 (gestion parcelles, faune, menaces, imports Kobo, page carte branchee sur l'API FastAPI)
 - **Donnees GeoJSON** + scripts de chargement initial
 
 ## Fonctionnalites principales
@@ -61,17 +60,9 @@ TechFOREST/
 |  `- tests/
 |- Frontend/                  # SPA React + Vite (port 5173)
 |  `- src/
-|- Frontend_php/              # App Laravel 11 (port 8080) + Vite (5174)
-|  |- app/
-|  |  |- Console/Commands/    # kobo:import-planting, monitoring, faune, menaces
-|  |  |- Http/Controllers/    # CartoController (proxy FastAPI), Parcelle, Menace...
-|  |  |- Services/            # KoboService, ImportKoboService, TechForestApiService
-|  |  `- Models/
-|  |- database/migrations/    # tables locales (parcelles, faune, menaces, ...)
-|  `- resources/views/        # vues Blade (dashboard, carte, gestion)
-|- docker/postgres-init/      # init Postgres (cree la DB Laravel + active PostGIS)
+|- docker/postgres-init/      # init Postgres (active PostGIS)
 |- Dockerfile                 # image FastAPI + React
-|- docker-compose.yml         # orchestration db + app + php
+|- docker-compose.yml         # orchestration db + app
 `- Readme.md
 ```
 
@@ -87,13 +78,12 @@ TechFOREST/
 
 ## Demarrage rapide
 
-### Option recommandee : Docker Compose (3 services)
+### Option recommandee : Docker Compose
 
 Une seule commande lance tout le projet :
 
-- `db`  : Postgres + PostGIS (port 5432) — heberge **2 bases** : `techforest_db` (FastAPI) et `techforest_app` (Laravel)
+- `db`  : Postgres + PostGIS (port 5432) — base `techforest_db` (FastAPI)
 - `app` : FastAPI (8000) + Frontend React/Vite (5173), migrations Alembic au boot
-- `php` : Laravel 11 (8080) + Vite Laravel (5174), migrations Artisan au boot
 
 Prerequis : Docker Desktop et un fichier `Backend/.env` valide (cf. `Backend/.env.example`).
 
@@ -108,7 +98,6 @@ Verifier l'etat :
 ```bash
 docker compose ps
 docker compose logs -f app
-docker compose logs -f php
 ```
 
 #### Initialisation des donnees
@@ -119,31 +108,14 @@ docker compose logs -f php
    docker compose exec app python -m app.scripts.load_geodata
    ```
 
-2. **Imports KoboToolbox vers Postgres (cote Laravel)** — a faire dans cet ordre :
-
-   ```bash
-   docker compose exec php php artisan kobo:import-planting
-   docker compose exec php php artisan kobo:import-monitoring
-   docker compose exec php php artisan kobo:import-faune
-   docker compose exec php php artisan kobo:import-menaces
-   ```
-
-   Ou tout d'un coup :
-
-   ```bash
-   docker compose exec php sh -c "php artisan kobo:import-planting && php artisan kobo:import-monitoring && php artisan kobo:import-faune && php artisan kobo:import-menaces"
-   ```
-
 #### Acces
 
-| Service             | URL                                |
-|---------------------|------------------------------------|
-| Frontend React      | http://localhost:5173              |
-| API FastAPI         | http://localhost:8000              |
-| Swagger             | http://localhost:8000/docs         |
-| **Frontend Laravel**| **http://localhost:8080**          |
-| Page carte Laravel  | http://localhost:8080/carte        |
-| Postgres            | localhost:5432 (techforest/techforest) |
+| Service        | URL                                    |
+|----------------|----------------------------------------|
+| Frontend React | http://localhost:5173                  |
+| API FastAPI    | http://localhost:8000                  |
+| Swagger        | http://localhost:8000/docs             |
+| Postgres       | localhost:5432 (techforest/techforest) |
 
 Arreter la stack :
 
@@ -155,15 +127,6 @@ docker compose down -v    # supprime aussi le volume Postgres (reset complet)
 #### Variables d'environnement
 
 - `Backend/.env` : variables FastAPI (DB, JWT, GEE, Kobo). Pas d'espaces autour des `=`, sinon Docker Compose ignore la ligne et l'API renvoie 0 soumission Kobo.
-- `Frontend_php/.env` : variables Laravel. Les valeurs DB et `TECHFOREST_API_URL` sont surchargees par `docker-compose.yml` pour pointer sur le reseau interne (`db`, `app`).
-- Pour appeler la page `/carte`, definir aussi dans `Frontend_php/.env` :
-
-  ```env
-  TECHFOREST_API_EMAIL=ton.compte@techforest.ci
-  TECHFOREST_API_PASSWORD=motdepasse
-  ```
-
-  Ce compte doit exister dans la base FastAPI (cree par `load_geodata` ou via `/api/auth/register`).
 
 ### Option alternative : Docker simple (DB externe requise)
 

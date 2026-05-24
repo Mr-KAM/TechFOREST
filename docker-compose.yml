@@ -37,41 +37,9 @@ services:
     ports:
       - "8000:8000"
       - "5173:5173"
-
-  # ─── Frontend Laravel (PHP) ──────────────────────────────────
-  php:
-    build:
-      context: ./Frontend_php
-      dockerfile: Dockerfile
-    container_name: techforest-php
-    depends_on:
-      db:
-        condition: service_healthy
-      app:
-        condition: service_started
-    environment:
-      APP_ENV: local
-      APP_DEBUG: "true"
-      APP_URL: http://localhost:8080
-      DB_CONNECTION: pgsql
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_DATABASE: techforest_app
-      DB_USERNAME: techforest
-      DB_PASSWORD: techforest
-      TECHFOREST_API_URL: http://app:8000
-      TECHFOREST_API_VERIFY_SSL: "false"
-    env_file:
-      - Frontend_php/.env
-    ports:
-      - "8080:8080"   # Laravel (php artisan serve)
-      - "5174:5173"   # Vite Laravel (évite le conflit avec celui de React)
     volumes:
-      - ./Frontend_php:/var/www/html
-      - php_vendor:/var/www/html/vendor
-      - php_node_modules:/var/www/html/node_modules
+      # Credentials GEE montes en lecture seule (pas embarques dans l'image)
+      - ./Backend/service-account-key-gee-true.json:/app/service-account-key-gee-true.json:ro
 
 volumes:
   techforest_db_data:
-  php_vendor:
-  php_node_modules:

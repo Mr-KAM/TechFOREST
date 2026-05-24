@@ -21,7 +21,10 @@ COPY Backend/app ./app
 COPY Backend/alembic ./alembic
 COPY Backend/alembic.ini .
 COPY Backend/data ./data
-COPY Backend/service-account-key-gee-true.json ./service-account-key-gee-true.json
+# NOTE: les credentials GEE (service-account-key-gee-true.json) ne sont PAS
+# copies dans l'image. Ils sont montes en volume au runtime via docker-compose
+# (voir docker-compose.yml). Cela evite de figer un secret dans l'image et
+# contourne les problemes OneDrive (fichiers cloud-only non lisibles par BuildKit).
 
 # Copy frontend source (without host node_modules)
 COPY Frontend/index.html ./Frontend/index.html

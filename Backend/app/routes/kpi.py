@@ -19,7 +19,11 @@ from app.schemas.kpi import (
     KoboSubmission,
     KPIDashboard,
     KPIValue,
+    FauneBreakdowns,
     LocationsResponse,
+    MenacesBreakdowns,
+    PlantingBreakdowns,
+    ReboisementBreakdowns,
     SubmissionLocation,
     TeamStats,
     TeamsResponse,
@@ -30,7 +34,11 @@ from app.security import get_current_user
 from app.services.kobo_service import (
     compute_ecogarde_stats,
     compute_form_indicators,
+    compute_faune_breakdowns,
     compute_form_indicators_by_forest,
+    compute_menaces_breakdowns,
+    compute_planting_breakdowns,
+    compute_reboisement_breakdowns,
     compute_team_stats,
     extract_team_missions,
     extract_locations,
@@ -286,6 +294,81 @@ async def get_indicators_by_forest(current_user: User = Depends(get_current_user
     return IndicatorsByForestResponse(forms=list(forms))
 
 
+@router.get("/reboisement/breakdowns", response_model=ReboisementBreakdowns)
+async def get_reboisement_breakdowns(current_user: User = Depends(get_current_user)):
+    """
+    Distributions détaillées du formulaire Monitoring Reboisement :
+    top espèces, facteurs de dégradation, missions par responsable, etc.
+    Alimente les graphiques de la vue détaillée reboisement.
+    """
+    settings = get_settings()
+    uid = settings.kobo_form_uids.get("monitoring_reboisement")
+    if not uid:
+        raise HTTPException(status_code=404, detail="Formulaire monitoring_reboisement non configuré")
+    submissions = await _run_sync(get_form_submissions_raw, uid)
+    data = compute_reboisement_breakdowns(submissions)
+    return ReboisementBreakdowns(**data)
+
+
+@router.get("/planting/breakdowns", response_model=PlantingBreakdowns)
+async def get_planting_breakdowns(current_user: User = Depends(get_current_user)):
+    """
+    Distributions détaillées du formulaire Suivi des plantations
+    (`planting_arbre`) : top espèces, plants/parcelle, plants/forêt,
+    surfaces, types de reboisement, origine des plants, qualité
+    de collecte et cohérence déclaré vs compté.
+    """
+    settings = get_settings()
+    uid = settings.kobo_form_uids.get("planting_arbre")
+    if not uid:
+        raise HTTPException(status_code=404, detail="Formulaire planting_arbre non configuré")
+    submissions = await _run_sync(get_form_submissions_raw, uid)
+    data = compute_planting_breakdowns(submissions)
+    return PlantingBreakdowns(**data)
+
+
+@router.get("/faune/breakdowns", response_model=FauneBreakdowns)
+async def get_faune_breakdowns(current_user: User = Depends(get_current_user)):
+    """
+    Distributions détaillées du formulaire Monitoring Faune :
+    - top espèces (espece_observee) et noms scientifiques
+    - abondance brute par espèce (somme nombre_individus_indices)
+    - fréquence des indices (select_multiple explosé) et indice dominant par groupe
+    - composition faunique par forêt et groupe (avec pourcentages)
+    - richesse spécifique par forêt et par groupe
+    - répartition certitude / type d'observation
+    - points d'eau par forêt, ratio observations/points d'eau
+    - distance moyenne des observations au point d'eau le plus proche (Haversine)
+    - indice de similarité Jaccard entre forêts
+    - durée de collecte (totale et par forêt), indice d'abondance horaire
+    """
+    settings = get_settings()
+    uid = settings.kobo_form_uids.get("monitoring_faune")
+    if not uid:
+        raise HTTPException(status_code=404, detail="Formulaire monitoring_faune non configuré")
+    submissions = await _run_sync(get_form_submissions_raw, uid)
+    data = compute_faune_breakdowns(submissions)
+    return FauneBreakdowns(**data)
+
+
+@router.get("/menaces/breakdowns", response_model=MenacesBreakdowns)
+async def get_menaces_breakdowns(current_user: User = Depends(get_current_user)):
+    """
+    Distributions détaillées du formulaire Suivi des menaces :
+    types de pressions, indices, gravité (score), ancienneté, indices synthétiques
+    de pression (brut/actif), priorité d'intervention, profil radar par forêt,
+    similarité Jaccard entre forêts, indicateurs qualité (photo, signature,
+    commentaires, géolocalisation).
+    """
+    settings = get_settings()
+    uid = settings.kobo_form_uids.get("menaces")
+    if not uid:
+        raise HTTPException(status_code=404, detail="Formulaire menaces non configuré")
+    submissions = await _run_sync(get_form_submissions_raw, uid)
+    data = compute_menaces_breakdowns(submissions)
+    return MenacesBreakdowns(**data)
+
+
 @router.get("/ecogardes", response_model=EcogardesResponse)
 async def get_ecogardes_stats(current_user: User = Depends(get_current_user)):
     """
@@ -429,7 +512,8 @@ async def get_submissions(
     try:
         resolved_form_uid = await _resolve_form_uid(form_uid)
         # On utilise l'API REST brute (pas pykobo) pour supporter les
-        # formulaires avec groupes répétés (faune : Mammiferes, Oiseaux, ...).
+        # formulaires avec groupes répétés (faune : nouvelle_observation /
+        # observation_faune / points_eau, reboisement, etc.).
         submissions = await _run_sync(get_form_submissions_raw, resolved_form_uid)
         return [
             KoboSubmission(id=s.get("_id", 0), data=s)

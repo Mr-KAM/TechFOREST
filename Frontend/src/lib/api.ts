@@ -267,6 +267,413 @@ export function getIndicatorsByForest(): Promise<IndicatorsByForestResponse> {
   return request("/kpi/indicators/by-forest");
 }
 
+export interface CountedItem {
+  name: string;
+  value: number;
+}
+
+export interface HealthByForest {
+  forest: string;
+  vivants: number;
+  morts: number;
+  degrades: number;
+}
+
+export interface HealthBySpecies {
+  espece: string;
+  vivants: number;
+  morts: number;
+  degrades: number;
+}
+
+export interface HealthByParcel {
+  parcelle: string;
+  vivants: number;
+  morts: number;
+  degrades: number;
+}
+
+export interface FactorByForest {
+  forest: string;
+  factor: string;
+  value: number;
+}
+
+export interface FactorDominant {
+  name: string;
+  value: number;
+  pct: number;
+}
+
+export interface ReboisementQualityMetrics {
+  taux_photo_arbre_pct: number;
+  taux_commentaire_arbre_pct: number;
+  taux_photo_equipe_pct: number;
+  taux_signature_pct: number;
+  arbres_total: number;
+  missions_total: number;
+}
+
+export interface ReboisementJaccardPair {
+  forest_a: string;
+  forest_b: string;
+  species_a: number;
+  species_b: number;
+  common: number;
+  jaccard: number;
+}
+
+export interface ReboisementBreakdowns {
+  top_species: CountedItem[];
+  top_local_names: CountedItem[];
+  factors: CountedItem[];
+  by_parcelle: CountedItem[];
+  by_responsable: CountedItem[];
+  health_by_forest: HealthByForest[];
+  health_by_species: HealthBySpecies[];
+  health_by_parcel: HealthByParcel[];
+  richesse_by_forest: CountedItem[];
+  factors_by_forest: FactorByForest[];
+  factor_dominant: FactorDominant | null;
+  jaccard_pairs: ReboisementJaccardPair[];
+  quality_metrics: ReboisementQualityMetrics | null;
+}
+
+export function getReboisementBreakdowns(): Promise<ReboisementBreakdowns> {
+  return request("/kpi/reboisement/breakdowns");
+}
+
+// ─── Planting (suivi des plantations) ─────────────────────────
+
+export interface PlantingEspeceItem {
+  name: string;
+  code: string;
+  plants: number;
+  parcelles: number;
+}
+
+export interface PlantingParcelleItem {
+  parcelle: string;
+  plants: number;
+  forest: string;
+  surface_ha: number;
+}
+
+export interface PlantingForestSurface {
+  forest: string;
+  surface_ha: number;
+}
+
+export interface PlantingEspeceByForest {
+  forest: string;
+  espece: string;
+  value: number;
+}
+
+export interface PlantingTimelinePoint {
+  date: string;
+  missions: number;
+}
+
+export interface PlantingCoherenceRow {
+  parcelle: string;
+  declares: number;
+  comptes: number;
+  ecart: number;
+}
+
+export interface PlantingParcelDetail {
+  parcelle: string;
+  forest: string;
+  surface_ha: number;
+  nb_especes: number;
+  plants_declares: number;
+  plants_comptes: number;
+  type_reboisement: string;
+  origine_plants: string;
+  responsable: string;
+  date: string;
+}
+
+export interface PlantingQualityMetrics {
+  taux_photo_parcelle_pct: number;
+  taux_delimitation_pct: number;
+  taux_gps_centre_pct: number;
+  taux_photo_equipe_pct: number;
+  taux_signature_pct: number;
+  taux_commentaire_pct: number;
+  taux_coherence_pct: number;
+  plants_total: number;
+  plants_declares_total: number;
+  missions_total: number;
+}
+
+export interface PlantingBreakdowns {
+  top_especes: PlantingEspeceItem[];
+  plants_par_parcelle: PlantingParcelleItem[];
+  plants_par_forest: CountedItem[];
+  surface_par_forest: PlantingForestSurface[];
+  type_reboisement: CountedItem[];
+  origine_plants: CountedItem[];
+  organisme_don: CountedItem[];
+  plants_par_responsable: CountedItem[];
+  especes_par_forest: PlantingEspeceByForest[];
+  timeline: PlantingTimelinePoint[];
+  coherence_top: PlantingCoherenceRow[];
+  parcelles_detail: PlantingParcelDetail[];
+  quality_metrics: PlantingQualityMetrics | null;
+}
+
+export function getPlantingBreakdowns(): Promise<PlantingBreakdowns> {
+  return request("/kpi/planting/breakdowns");
+}
+
+export interface ForestValue {
+  forest: string;
+  value: number;
+}
+
+export interface DominantIndexByGroup {
+  group: string;
+  indice: string;
+  value: number;
+}
+
+export interface CompositionItem {
+  forest: string;
+  group: string;
+  value: number;
+  pct: number;
+}
+
+export interface RatioObsWater {
+  forest: string;
+  observations: number;
+  points_eau: number;
+  ratio: number | null;
+}
+
+export interface DistanceToWater {
+  forest: string;
+  mean_distance_m: number;
+  min_distance_m: number;
+  max_distance_m: number;
+  sample_size: number;
+}
+
+export interface JaccardPair {
+  forest_a: string;
+  forest_b: string;
+  species_a: number;
+  species_b: number;
+  common: number;
+  jaccard: number;
+}
+
+export interface ForestDureeItem {
+  forest: string;
+  value: number;
+}
+
+export interface FauneBreakdowns {
+  top_species: CountedItem[];
+  top_scientific_names: CountedItem[];
+  abundance_by_species: CountedItem[];
+  groups: CountedItem[];
+  indices: CountedItem[];
+  indice_dominant_par_groupe: DominantIndexByGroup[];
+  certitude_distribution: CountedItem[];
+  type_observation_distribution: CountedItem[];
+  missions_by_forest: ForestValue[];
+  observations_by_forest: ForestValue[];
+  richesse_by_forest: CountedItem[];
+  richesse_by_group: CountedItem[];
+  composition_by_forest_group: CompositionItem[];
+  points_eau_by_forest: ForestValue[];
+  ratio_observations_points_eau: RatioObsWater[];
+  mean_distance_to_water: DistanceToWater[];
+  jaccard_pairs: JaccardPair[];
+  duree_totale_heures: number;
+  duree_par_foret: ForestDureeItem[];
+  indice_abondance_horaire: number;
+}
+
+export function getFauneBreakdowns(): Promise<FauneBreakdowns> {
+  return request("/kpi/faune/breakdowns");
+}
+
+// ── Menaces forestières ──────────────────────────────────────
+
+export interface MenacesSummary {
+  missions_total: number;
+  observations_menaces_total: number;
+  nombre_total_indices: number;
+  score_moyen_gravite: number;
+  taux_menaces_graves_pct: number;
+  taux_menaces_recentes_pct: number;
+  indice_pression_brut: number;
+  indice_pression_active: number;
+  taux_observations_photo_pct: number;
+  taux_menaces_geolocalisees_pct: number;
+  duree_totale_heures: number;
+  observations_par_mission: number;
+  observations_par_heure: number;
+}
+
+export interface MenacesForestValue {
+  forest: string;
+  value: number;
+}
+
+export interface MenacesTypeForestItem {
+  forest: string;
+  type_pression: string;
+  value: number;
+}
+
+export interface MenacesGraviteItem {
+  niveau_gravite: string;
+  label: string;
+  value: number;
+}
+
+export interface MenacesGraviteByForestItem {
+  forest: string;
+  niveau_gravite: string;
+  value: number;
+}
+
+export interface MenacesGraviteByTypeItem {
+  type_pression: string;
+  niveau_gravite: string;
+  value: number;
+}
+
+export interface MenacesScoreByForest {
+  forest: string;
+  value: number;
+}
+
+export interface MenacesScoreByType {
+  type_pression: string;
+  value: number;
+}
+
+export interface MenacesAncienneteItem {
+  anciennete_indice: string;
+  label: string;
+  value: number;
+}
+
+export interface MenacesAncienneteByForestItem {
+  forest: string;
+  anciennete_indice: string;
+  value: number;
+}
+
+export interface MenacesAncienneteByTypeItem {
+  type_pression: string;
+  anciennete_indice: string;
+  value: number;
+}
+
+export interface MenacesIndicesByType {
+  name: string;
+  value: number;
+}
+
+export interface MenacesIndiceDominantByType {
+  type_pression: string;
+  indice: string | null;
+  value: number;
+}
+
+export interface MenacesIndiceDetailByType {
+  type_pression: string;
+  indice: string;
+  value: number;
+  share_pct: number;
+}
+
+export interface MenacesIndiceParForestItem {
+  forest: string;
+  indice: string;
+  value: number;
+}
+
+export interface MenacesPressureByType {
+  type_pression: string;
+  value: number;
+}
+
+export interface MenacesPrioriteItem {
+  type_pression: string;
+  score: number;
+  nombre_observations: number;
+  nombre_indices: number;
+  score_moyen_gravite: number;
+  score_moyen_anciennete: number;
+}
+
+export interface MenacesRadarItem {
+  forest: string;
+  type_pression: string;
+  value: number;
+  normalized: number;
+}
+
+export interface MenacesJaccardPair {
+  forest_a: string;
+  forest_b: string;
+  types_a: number;
+  types_b: number;
+  common: number;
+  jaccard: number;
+}
+
+export interface MenacesQualityMetrics {
+  taux_observations_photo_pct: number;
+  taux_observations_commentaire_pct: number;
+  taux_missions_signature_pct: number;
+  taux_missions_photo_equipe_pct: number;
+  taux_geolocalisees_pct: number;
+  observations_total: number;
+  missions_total: number;
+}
+
+export interface MenacesBreakdowns {
+  summary: MenacesSummary;
+  types_pression: CountedItem[];
+  indices_pression: CountedItem[];
+  indices_dominants_par_type: MenacesIndiceDominantByType[];
+  indices_detail_par_type: MenacesIndiceDetailByType[];
+  indices_par_type: MenacesIndicesByType[];
+  indices_par_forest: MenacesForestValue[];
+  indices_pression_par_forest: MenacesIndiceParForestItem[];
+  observations_par_forest: MenacesForestValue[];
+  missions_par_forest: MenacesForestValue[];
+  types_par_forest: MenacesTypeForestItem[];
+  gravite_distribution: MenacesGraviteItem[];
+  gravite_par_forest: MenacesGraviteByForestItem[];
+  gravite_par_type: MenacesGraviteByTypeItem[];
+  score_gravite_par_forest: MenacesScoreByForest[];
+  score_gravite_par_type: MenacesScoreByType[];
+  anciennete_distribution: MenacesAncienneteItem[];
+  anciennete_par_forest: MenacesAncienneteByForestItem[];
+  anciennete_par_type: MenacesAncienneteByTypeItem[];
+  pression_par_forest: MenacesForestValue[];
+  pression_par_type: MenacesPressureByType[];
+  priorite_par_type: MenacesPrioriteItem[];
+  radar_profile: MenacesRadarItem[];
+  jaccard_pairs: MenacesJaccardPair[];
+  quality_metrics: MenacesQualityMetrics;
+  autres_libelles: CountedItem[];
+}
+
+export function getMenacesBreakdowns(): Promise<MenacesBreakdowns> {
+  return request("/kpi/menaces/breakdowns");
+}
+
 export interface EcogardeStats {
   username: string;
   total_submissions: number;

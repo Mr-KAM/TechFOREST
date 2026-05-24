@@ -1,0 +1,135 @@
+﻿================================================================================
+FORM: planting | name: TechForest : Suivi des parcelles rebois├®es (planting) des  for├¬ts communautaires de Zaranou et Apou├®ba | uid: aqPidQ8gMiKhgDXcfNTxhp
+-- SURVEY (46) --
+  [start] start | 
+  [end] end | 
+  [start-geopoint] start_geo | 
+  [deviceid] device | 
+  [today] today | 
+  [begin_group] acceuil | Information
+  [note] acceuil/logo_ra | ## ­ƒî▒ Bienvenue sur TechForest Monitoring
+  [note] acceuil/description | Ce formulaire est con├ºu pour assurer le **suivi des parcelles rebois├®es** dans les for├¬ts communautaires de **Zaranou** et dÔÇÖ**Apou├®ba**.
+
+Il permet de collecter les informations relatives ├á lÔÇÖ├®quipe de mission, ├á lÔÇÖidentification de la parcelle, ├á sa localisation GPS, ├á sa d├®limitation, ├á sa superficie, ├á lÔÇÖorigine des plants, au type de reboisement r├®alis├® ainsi quÔÇÖaux esp├¿ces plant├®es.
+
+- **Objectif principal :** documenter les parcelles rebois├®es et suivre les actions de plantation r├®alis├®es sur le terrain.
+- **Donn├®es collect├®es :** num├®ro de parcelle, coordonn├®es GPS, d├®limitation de la parcelle, superficie, origine des plants, type de reboisement, esp├¿ces plant├®es et nombre de plants.
+- **Utilit├® :** faciliter le suivi des plantations, v├®rifier la coh├®rence des donn├®es collect├®es et orienter les actions de gestion, dÔÇÖentretien ou de regarnissage.
+- **Preuves terrain :** les photos, coordonn├®es GPS et signatures permettent de renforcer la tra├ºabilit├® des observations.
+
+**Important :** chaque parcelle doit ├¬tre correctement localis├®e, d├®limit├®e et renseign├®e avec pr├®cision afin de garantir la qualit├® des donn├®es de suivi du reboisement.
+  [begin_group] metadonnees_collecte | M├®tadonn├®es de collecte
+  [date] metadonnees_collecte/date_enquete | Date de lÔÇÖenqu├¬te
+  [begin_group] equipe_collecte | ├ëquipe de collecte des donn├®es
+  [select_one] equipe_collecte/foret_communautaire | For├¬t communautaire concern├®e | list=foret_communautaire
+  [select_multiple] equipe_collecte/membres_mission | Membres de la mission | list=membre_mission
+  [select_one] equipe_collecte/responsable_mission | Nom du responsable de la collecte | list=membre_mission
+  [image] equipe_collecte/photo_equipe | Photo de lÔÇÖ├®quipe de collecte
+  [begin_group] identification_parcelle | A. Identification de la parcelle
+  [text] identification_parcelle/numero_parcelle | Num├®ro de la parcelle rebois├®e
+  [geopoint] identification_parcelle/gps_centre_parcelle | Coordonn├®es GPS du centre de la parcelle rebois├®e
+  [geoshape] identification_parcelle/delimitation_parcelle | D├®limitation GPS de la parcelle rebois├®e
+  [calculate] identification_parcelle/surface_calculee_ha | 
+  [note] identification_parcelle/superficie_ha | La superficie rebois├®e mesur├®e est de : ${surface_calculee_ha} ha
+  [image] identification_parcelle/photo_parcelle_reboisee | Photo de la parcelle rebois├®e
+  [select_one] identification_parcelle/origine_plants | Origine des plants | list=origine_plants
+  [select_one] identification_parcelle/organisme_don | Organisme ayant r├®alis├® le don | list=organisme_don
+  [text] identification_parcelle/autre_don | Si autre organisme donateur, pr├®cisez
+  [select_one] identification_parcelle/type_reboisement | Type de reboisement r├®alis├® dans la parcelle | list=type_reboisement
+  [begin_repeat] espece_plantee | B. Esp├¿ce plant├®e
+  [select_one] espece_plantee/nom_arbre | Nom local ou commun de lÔÇÖesp├¿ce plant├®e | list=arbre
+  [text] espece_plantee/autre_espece | Si autre esp├¿ce, pr├®cisez le nom local ou commun
+  [text] espece_plantee/nom_scientifique_autre | Si autre esp├¿ce, pr├®cisez le nom scientifique
+  [calculate] espece_plantee/nom_scientifique | 
+  [note] espece_plantee/affichage_nom_scientifique | Nom scientifique : ${nom_scientifique}
+  [integer] espece_plantee/nombre_plants | Nombre de plants de cette esp├¿ce
+  [calculate] nombre_especes_parcelle | 
+  [calculate] total_plants_especes | 
+  [note] total_especes | Nombre total dÔÇÖesp├¿ces renseign├®es : ${nombre_especes_parcelle}
+  [note] total_plants | Total des plants renseign├®s par esp├¿ce : ${total_plants_especes}
+  [integer] arbres_plante | Nombre total dÔÇÖarbres plant├®s dans la parcelle
+  [note] alerte_coherence_plants | ÔÜá Le total d├®clar├® ne correspond pas ├á la somme des plants par esp├¿ce. Veuillez corriger les valeurs saisies.
+  [text] commentaires_responsable | Commentaires du responsable de la collecte
+  [image] signature_responsable | Signature du responsable de la collecte
+-- CHOICES --
+  foret_communautaire: ['zaranou', 'apoueba']
+  membre_mission: ['ettien_ehoussou_jules', 'konin_tano_hermann', 'konan_kouadio_sylvere', 'dongui_kouadio_jp', 'koffi_aka_david', 'tchimou_arsene', 'amoikon_jean_marie', 'ettien_tehia', 'ahimou_noelle', 'aka_adony', 'gangame_issouf', 'kouame_aka_kouadio', 'kouame_diakalan', 'kouakou_aman_hubert', 'sansan_kambou', 'nzo_kouassi_guillaume', 'kumassi_adom_robert', 'ehouman_kouame_jean_jacques', 'kouakou_adou', 'koffi_ebrottie_desnoces', 'kouame_amoakon', 'ettien_diapanini', 'brou_bouadou', 'tieni_affoua', 'eponon_deda']
+  arbre: ['frake', 'framire', 'bois_bete', 'gmelina', 'badi', 'acajou', 'fromager', 'makore', 'iroko', 'cedrela', 'tiama', 'petit_cola', 'autre']
+  origine_plants: ['pepiniere', 'achat', 'don']
+  organisme_don: ['cooperatives', 'minef', 'communaute', 'autre']
+  type_reboisement: ['enrichissement', 'plantation_pure', 'rna']
+-- SAMPLE KEYS --
+  none
+================================================================================
+FORM: reboisement | name: TechForest : Suivi des arbres rebois├®s des for├¬ts communautaires de Zaranou et Apou├®ba | uid: afG6rFRWm3NHqfB5P3g59q
+-- SURVEY (30) --
+  [start] start | 
+  [end] end | 
+  [start-geopoint] start_geo | 
+  [deviceid] device | 
+  [today] today | 
+  [begin_group] acceuil | Information
+  [note] acceuil/logo_ra | ## ­ƒî│ Bienvenue sur TechForest Monitoring
+  [note] acceuil/description | Ce formulaire est con├ºu pour assurer le **suivi de lÔÇÖ├®tat sanitaire des arbres rebois├®s** dans les for├¬ts communautaires de **Zaranou** et dÔÇÖ**Apou├®ba**.
+
+Il permet de collecter des informations sur lÔÇÖ├®quipe de mission, la parcelle suivie, lÔÇÖesp├¿ce observ├®e, son nom scientifique, son ├®tat sanitaire, les facteurs ├®ventuels de d├®gradation, ainsi que les coordonn├®es GPS et les preuves photographiques associ├®es.
+
+- **Objectif principal :** ├®valuer lÔÇÖ├®tat des arbres rebois├®s et identifier les signes de d├®gradation.
+- **Donn├®es collect├®es :** num├®ro de parcelle, esp├¿ce, ├®tat sanitaire, facteurs de d├®gradation, photo et localisation GPS.
+- **Utilit├® :** suivre lÔÇÖ├®volution des plantations, rep├®rer les arbres en mauvais ├®tat et orienter les actions dÔÇÖentretien, de protection ou de regarnissage.
+
+**Important :** chaque observation doit ├¬tre localis├®e avec pr├®cision et accompagn├®e dÔÇÖune photo lorsque cela est possible.
+  [begin_group] equipe_collecte | M├®tadonn├®es et ├®quipe de collecte
+  [date] equipe_collecte/date_enquete | Date de lÔÇÖenqu├¬te
+  [select_one] equipe_collecte/foret_communautaire | For├¬t communautaire concern├®e | list=foret_communautaire
+  [select_multiple] equipe_collecte/membres_mission | Membres de la mission | list=membre_mission
+  [select_one] equipe_collecte/responsable_mission | Responsable de la mission | list=membre_mission
+  [image] equipe_collecte/photo_equipe | Photo de lÔÇÖ├®quipe de collecte
+  [begin_repeat] observation_arbre | Observation dÔÇÖun arbre rebois├®
+  [text] observation_arbre/numero_parcelle | Num├®ro de la parcelle rebois├®e
+  [select_one] observation_arbre/nom_arbre | Nom commun ou local de lÔÇÖarbre | list=arbre
+  [calculate] observation_arbre/nom_scientifique | 
+  [note] observation_arbre/afficher_nom_scientifique | Nom scientifique : ${nom_scientifique}
+  [select_one] observation_arbre/etat_sanitaire | ├ëtat sanitaire g├®n├®ral de lÔÇÖarbre | list=etat_sanitaire
+  [select_multiple] observation_arbre/facteurs_degradation | Facteurs de d├®gradation observ├®s | list=facteur_degradation
+  [text] observation_arbre/autre_facteur_degradation | Pr├®cisez lÔÇÖautre facteur de d├®gradation
+  [image] observation_arbre/photo_arbre | Photo de lÔÇÖarbre
+  [geopoint] observation_arbre/gps_arbre | Coordonn├®es GPS de lÔÇÖarbre
+  [text] observation_arbre/commentaire_arbre | Commentaire sur lÔÇÖarbre observ├®
+  [text] commentaires_responsable | Commentaires du responsable de la collecte
+  [image] signature_responsable | Signature du responsable de la collecte
+-- CHOICES --
+  foret_communautaire: ['zaranou', 'apoueba']
+  membre_mission: ['ettien_ehoussou_jules_zaranou', 'konin_tano_hermann_zaranou', 'konan_kouadio_sylvere_zaranou', 'dongui_kouadio_jp_zaranou', 'koffi_aka_david_zaranou', 'tchimou_arsene_zaranou', 'amoikon_jean_marie_zaranou', 'ettien_tehia_zaranou', 'ahimou_noelle_zaranou', 'aka_adony_zaranou', 'gangame_issouf_zaranou', 'ettien_ehoussou_jules_apoueba', 'kouame_aka_kouadio_apoueba', 'kouame_diakalan_apoueba', 'kouakou_aman_hubert_apoueba', 'sansan_kambou_apoueba', 'nzo_kouassi_guillaume_apoueba', 'kumassi_adom_robert_apoueba', 'ehouman_kouame_jean_jacques_apoueba', 'kouakou_adou_apoueba', 'koffi_ebrottie_desnoces_apoueba', 'kouame_amoakon_apoueba', 'ettien_diapanini_apoueba', 'brou_bouadou_apoueba', 'tieni_affoua_apoueba', 'eponon_deda_apoueba']
+  arbre: ['frake_zaranou', 'framire_zaranou', 'bois_bete_zaranou', 'gmelina_zaranou', 'makore_zaranou', 'badi_zaranou', 'acajou_zaranou', 'fromager_zaranou', 'iroko_zaranou', 'frake_apoueba', 'framire_apoueba', 'bois_bete_apoueba', 'cedrela_apoueba', 'gmelina_apoueba', 'tiama_apoueba', 'badi_apoueba', 'fromager_apoueba', 'acajou_apoueba', 'petit_cola_apoueba']
+  etat_sanitaire: ['tres_bon_etat', 'bon_etat', 'etat_moyen', 'degrade', 'tres_degrade', 'mort']
+  facteur_degradation: ['attaque_ravageurs', 'blessures_mecaniques', 'broutage_animaux', 'etouffement_herbes', 'brulure_feu_brousse', 'parcelle_inondee', 'autre']
+-- SAMPLE KEYS --
+  _id
+  formhub/uuid
+  start
+  end
+  start_geo
+  device
+  today
+  equipe_collecte/date_enquete
+  equipe_collecte/foret_communautaire
+  equipe_collecte/membres_mission
+  equipe_collecte/responsable_mission
+  equipe_collecte/photo_equipe
+  REPEAT observation_arbre
+  signature_responsable
+  __version__
+  meta/instanceID
+  meta/instanceName
+  _xform_id_string
+  _uuid
+  meta/rootUuid
+  REPEAT _attachments
+  _status
+  REPEAT _geolocation
+  _submission_time
+  REPEAT _tags
+  REPEAT _notes
+  _validation_status
+  _submitted_by

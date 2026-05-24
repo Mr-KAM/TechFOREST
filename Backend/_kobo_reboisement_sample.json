@@ -1,0 +1,87 @@
+{
+  "count": 2,
+  "next": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/data/?format=json&limit=1&start=1",
+  "previous": null,
+  "results": [
+    {
+      "_id": 761173055,
+      "formhub/uuid": "adbd3dd406964fc28535fb2169030863",
+      "start": "2026-05-23T19:17:19.832Z",
+      "end": "2026-05-23T19:28:53.822Z",
+      "start_geo": "6.8902546 -5.2249338 268.0 13.113",
+      "device": "collect:mRcq9u2i5Qvv5gIB",
+      "today": "2026-05-23",
+      "equipe_collecte/date_enquete": "2026-05-23",
+      "equipe_collecte/foret_communautaire": "zaranou",
+      "equipe_collecte/membres_mission": "konan_kouadio_sylvere_zaranou tchimou_arsene_zaranou koffi_aka_david_zaranou",
+      "equipe_collecte/responsable_mission": "koffi_aka_david_zaranou",
+      "equipe_collecte/photo_equipe": "1779563919311.jpg",
+      "observation_arbre": [
+        {
+          "observation_arbre/numero_parcelle": "817228",
+          "observation_arbre/nom_arbre": "badi_zaranou",
+          "observation_arbre/nom_scientifique": "Nauclea diderrichii",
+          "observation_arbre/etat_sanitaire": "mort",
+          "observation_arbre/facteurs_degradation": "blessures_mecaniques brulure_feu_brousse",
+          "observation_arbre/photo_arbre": "1779564488928.jpg",
+          "observation_arbre/gps_arbre": "6.8902354 -5.2249378 268.0 9.891"
+        }
+      ],
+      "signature_responsable": "1779564531108.jpg",
+      "__version__": "v6DLQpExQwu5w69aYHWAik",
+      "meta/instanceID": "uuid:d0487303-0268-4e36-917e-53d97ac4223d",
+      "meta/instanceName": "zaranou - 2026-05-23",
+      "_xform_id_string": "afG6rFRWm3NHqfB5P3g59q",
+      "_uuid": "d0487303-0268-4e36-917e-53d97ac4223d",
+      "meta/rootUuid": "uuid:d0487303-0268-4e36-917e-53d97ac4223d",
+      "_attachments": [
+        {
+          "download_url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/data/761173055/attachments/attaN865buFsoBkFYq3ZpohQ/",
+          "mimetype": "image/jpeg",
+          "filename": "techforest_01/attachments/adbd3dd406964fc28535fb2169030863/d0487303-0268-4e36-917e-53d97ac4223d/1779564531108.jpg",
+          "media_file_basename": "1779564531108.jpg",
+          "uid": "attaN865buFsoBkFYq3ZpohQ",
+          "is_deleted": false,
+          "download_large_url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/data/761173055/attachments/attaN865buFsoBkFYq3ZpohQ/large/",
+          "download_medium_url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/data/761173055/attachments/attaN865buFsoBkFYq3ZpohQ/medium/",
+          "download_small_url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/data/761173055/attachments/attaN865buFsoBkFYq3ZpohQ/small/",
+          "question_xpath": "signature_responsable"
+        },
+        {
+          "download_url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/data/761173055/attachments/attYWvMFbgpu4AEbjGcb9RXz/",
+          "mimetype": "image/jpeg",
+          "filename": "techforest_01/attachments/adbd3dd406964fc28535fb2169030863/d0487303-0268-4e36-917e-53d97ac4223d/1779564488928.jpg",
+          "media_file_basename": "1779564488928.jpg",
+          "uid": "attYWvMFbgpu4AEbjGcb9RXz",
+          "is_deleted": false,
+          "download_large_url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/data/761173055/attachments/attYWvMFbgpu4AEbjGcb9RXz/large/",
+          "download_medium_url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/data/761173055/attachments/attYWvMFbgpu4AEbjGcb9RXz/medium/",
+          "download_small_url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/data/761173055/attachments/attYWvMFbgpu4AEbjGcb9RXz/small/",
+          "question_xpath": "observation_arbre[1]/photo_arbre"
+        },
+        {
+          "download_url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/data/761173055/attachments/attoyXJ8naFhbLTcvAgCrJjL/",
+          "mimetype": "image/jpeg",
+          "filename": "techforest_01/attachments/adbd3dd406964fc28535fb2169030863/d0487303-0268-4e36-917e-53d97ac4223d/1779563919311.jpg",
+          "media_file_basename": "1779563919311.jpg",
+          "uid": "attoyXJ8naFhbLTcvAgCrJjL",
+          "is_deleted": false,
+          "download_large_url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/data/761173055/attachments/attoyXJ8naFhbLTcvAgCrJjL/large/",
+          "download_medium_url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/data/761173055/attachments/attoyXJ8naFhbLTcvAgCrJjL/medium/",
+          "download_small_url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/data/761173055/attachments/attoyXJ8naFhbLTcvAgCrJjL/small/",
+          "question_xpath": "equipe_collecte/photo_equipe"
+        }
+      ],
+      "_status": "submitted_via_web",
+      "_geolocation": [
+        6.8902546,
+        -5.2249338
+      ],
+      "_submission_time": "2026-05-23T19:39:00",
+      "_tags": [],
+      "_notes": [],
+      "_validation_status": {},
+      "_submitted_by": "techforest_01"
+    }
+  ]
+}

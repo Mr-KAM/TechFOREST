@@ -1,0 +1,1825 @@
+{
+  "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/?format=json",
+  "owner": "https://kf.kobotoolbox.org/api/v2/users/techforest_01/?format=json",
+  "owner__username": "techforest_01",
+  "parent": null,
+  "settings": {
+    "sector": {
+      "label": "Environnement",
+      "value": "Environment"
+    },
+    "country": [
+      {
+        "label": "Côte d'Ivoire",
+        "value": "CIV"
+      }
+    ],
+    "description": "",
+    "collects_pii": null,
+    "organization": "",
+    "country_codes": [
+      "CIV"
+    ],
+    "operational_purpose": null
+  },
+  "asset_type": "survey",
+  "files": [
+    {
+      "uid": "affe9i3U8a9XovWPhF9qNfh",
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/files/affe9i3U8a9XovWPhF9qNfh/?format=json",
+      "asset": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/techforest_01/?format=json",
+      "user__username": "techforest_01",
+      "file_type": "form_media",
+      "description": "default",
+      "date_created": "2026-05-23T19:17:00.224917Z",
+      "content": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/files/affe9i3U8a9XovWPhF9qNfh/content/?format=json",
+      "metadata": {
+        "hash": "md5:d97c98cffd6818f4a8c1c55ada6fc703",
+        "filename": "img_suivi_planting_arbre.png",
+        "mimetype": "image/png"
+      }
+    },
+    {
+      "uid": "afPSNTopd4N3wF3RAkSxXkK",
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/files/afPSNTopd4N3wF3RAkSxXkK/?format=json",
+      "asset": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/avocet2025/?format=json",
+      "user__username": "avocet2025",
+      "file_type": "form_media",
+      "description": "default",
+      "date_created": "2026-04-17T15:23:20.344195Z",
+      "content": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/files/afPSNTopd4N3wF3RAkSxXkK/content/?format=json",
+      "metadata": {
+        "hash": "md5:61c1fc1ca61e0e4c22ef867ba5c1cdcb",
+        "filename": "logo_RA.png",
+        "mimetype": "image/png"
+      }
+    }
+  ],
+  "summary": {
+    "geo": true,
+    "labels": [
+      "Date de l’enquête",
+      "Forêt communautaire concernée",
+      "Membres de la mission",
+      "Responsable de la mission",
+      "Photo de l’équipe de collecte"
+    ],
+    "columns": [
+      "name",
+      "type",
+      "label",
+      "default",
+      "required",
+      "select_from_list_name",
+      "hint",
+      "choice_filter",
+      "parameters",
+      "appearance",
+      "constraint",
+      "constraint_message",
+      "calculation",
+      "relevant"
+    ],
+    "lock_all": false,
+    "lock_any": false,
+    "languages": [
+      "French",
+      null
+    ],
+    "row_count": 17,
+    "name_quality": {
+      "ok": 0,
+      "bad": 0,
+      "good": 17,
+      "total": 17,
+      "firsts": {}
+    },
+    "default_translation": "French"
+  },
+  "date_created": "2026-04-15T13:59:06.551061Z",
+  "date_modified": "2026-05-24T00:20:09.930113Z",
+  "date_deployed": "2026-05-24T00:20:09.929725Z",
+  "version_id": "vWVoKzKZNof36uZwtTmaky",
+  "version__content_hash": "28602f1e5106f713df3913ef0bc9ed312017ee29",
+  "version_count": 49,
+  "has_deployment": true,
+  "deployed_version_id": "vWVoKzKZNof36uZwtTmaky",
+  "deployed_versions": {
+    "count": 9,
+    "next": null,
+    "previous": null,
+    "results": [
+      {
+        "uid": "vWVoKzKZNof36uZwtTmaky",
+        "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/versions/vWVoKzKZNof36uZwtTmaky/?format=json",
+        "content_hash": "28602f1e5106f713df3913ef0bc9ed312017ee29",
+        "date_deployed": "2026-05-23T22:47:37.669011Z",
+        "date_modified": "2026-05-23T22:47:37.669011Z"
+      },
+      {
+        "uid": "vThiTMuCM5H7PHU8yWmt9q",
+        "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/versions/vThiTMuCM5H7PHU8yWmt9q/?format=json",
+        "content_hash": "618ed20e19df17c1d962306ee69b8f0babc36ccf",
+        "date_deployed": "2026-05-23T19:27:56.879851Z",
+        "date_modified": "2026-05-23T19:27:56.879851Z"
+      },
+      {
+        "uid": "v6DLQpExQwu5w69aYHWAik",
+        "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/versions/v6DLQpExQwu5w69aYHWAik/?format=json",
+        "content_hash": "73401a4e0b6af1931cbb9b0ee7f972fa1af4ce25",
+        "date_deployed": "2026-05-23T19:14:42.683217Z",
+        "date_modified": "2026-05-23T19:14:42.683217Z"
+      },
+      {
+        "uid": "vuhiY2eJ6LmFTgrBtrt5Vf",
+        "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/versions/vuhiY2eJ6LmFTgrBtrt5Vf/?format=json",
+        "content_hash": "c1724af476bf19a52ed13ae8aeb88ab6044b9e8d",
+        "date_deployed": "2026-04-22T11:37:38.898546Z",
+        "date_modified": "2026-04-22T11:37:38.898546Z"
+      },
+      {
+        "uid": "v2JSnKPZCFstvy5RViQjvW",
+        "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/versions/v2JSnKPZCFstvy5RViQjvW/?format=json",
+        "content_hash": "2adb0940810d512da771a7a64c8e0fe1db808ec1",
+        "date_deployed": "2026-04-22T11:34:34.190157Z",
+        "date_modified": "2026-04-22T11:34:34.190157Z"
+      },
+      {
+        "uid": "vj79WJ36Dqd2TdW7J8rJLd",
+        "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/versions/vj79WJ36Dqd2TdW7J8rJLd/?format=json",
+        "content_hash": "7dce5c70269a662f17e68a8142dbad7b3bde2d17",
+        "date_deployed": "2026-04-19T18:31:08.042763Z",
+        "date_modified": "2026-04-19T18:31:08.042763Z"
+      },
+      {
+        "uid": "vYbm6ziyNnY25FwXstksyX",
+        "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/versions/vYbm6ziyNnY25FwXstksyX/?format=json",
+        "content_hash": "b7c91660adffa047b0698175a29cf7db75c08264",
+        "date_deployed": "2026-04-15T16:07:16.310620Z",
+        "date_modified": "2026-04-15T16:07:16.310620Z"
+      },
+      {
+        "uid": "vA6tBFdZUqz7RYXDtZyqaS",
+        "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/versions/vA6tBFdZUqz7RYXDtZyqaS/?format=json",
+        "content_hash": "c43a2c593c149c13b97cbed14389117ef48bd45b",
+        "date_deployed": "2026-04-15T15:08:53.160789Z",
+        "date_modified": "2026-04-15T15:08:53.160789Z"
+      },
+      {
+        "uid": "v67uxwnfWbqRHJLhVVsVt9",
+        "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/versions/v67uxwnfWbqRHJLhVVsVt9/?format=json",
+        "content_hash": "c58bfb9ddaa296d011acbbba074f726565ee43b0",
+        "date_deployed": "2026-04-15T15:06:34.922014Z",
+        "date_modified": "2026-04-15T15:06:34.922014Z"
+      }
+    ]
+  },
+  "deployment__links": {
+    "url": "https://ee.kobotoolbox.org/LfAVqmOF",
+    "single_url": "https://ee.kobotoolbox.org/single/LfAVqmOF",
+    "single_once_url": "https://ee.kobotoolbox.org/single/8e9002e8a564dc3029af1b9a5632a66e",
+    "offline_url": "https://ee.kobotoolbox.org/x/LfAVqmOF",
+    "preview_url": "https://ee.kobotoolbox.org/preview/LfAVqmOF",
+    "iframe_url": "https://ee.kobotoolbox.org/i/LfAVqmOF",
+    "single_iframe_url": "https://ee.kobotoolbox.org/single/i/LfAVqmOF",
+    "single_once_iframe_url": "https://ee.kobotoolbox.org/single/i/8e9002e8a564dc3029af1b9a5632a66e"
+  },
+  "deployment__active": true,
+  "deployment__data_download_links": {
+    "xls_legacy": "https://kc.kobotoolbox.org/techforest_01/exports/afG6rFRWm3NHqfB5P3g59q/xls/",
+    "csv_legacy": "https://kc.kobotoolbox.org/techforest_01/exports/afG6rFRWm3NHqfB5P3g59q/csv/",
+    "zip_legacy": "https://kc.kobotoolbox.org/techforest_01/exports/afG6rFRWm3NHqfB5P3g59q/zip/",
+    "kml_legacy": "https://kc.kobotoolbox.org/techforest_01/exports/afG6rFRWm3NHqfB5P3g59q/kml/",
+    "xls": "https://kc.kobotoolbox.org/techforest_01/reports/afG6rFRWm3NHqfB5P3g59q/export.xlsx",
+    "csv": "https://kc.kobotoolbox.org/techforest_01/reports/afG6rFRWm3NHqfB5P3g59q/export.csv"
+  },
+  "deployment__submission_count": 2,
+  "deployment__last_submission_time": "2026-05-23T19:39:07.130704Z",
+  "deployment__encrypted": false,
+  "deployment__uuid": "adbd3dd406964fc28535fb2169030863",
+  "deployment_status": "deployed",
+  "report_styles": {
+    "default": {},
+    "specified": {
+      "end": {},
+      "Autre": {},
+      "start": {},
+      "today": {},
+      "Oiseau": {},
+      "device": {},
+      "Group_1": {},
+      "Reptile": {},
+      "acceuil": {},
+      "aq8mi17": {},
+      "fk6ct14": {},
+      "group_2": {},
+      "hn1xx08": {},
+      "jj7py77": {},
+      "lm2qs48": {},
+      "logo_RA": {},
+      "logo_ra": {},
+      "qy7my43": {},
+      "ri8rx02": {},
+      "un8ze35": {},
+      "vh0ij04": {},
+      "wl2zz10": {},
+      "yi52e21": {},
+      "/jl8ns22": {},
+      "/oi0qo03": {},
+      "Rongeurs": {},
+      "0fbbejf6i": {},
+      "0wyKJf2mt": {},
+      "1AXjQTC5w": {},
+      "2W5CaAEpB": {},
+      "2Yrij3C1o": {},
+      "3ZZSwAMXz": {},
+      "3yJMVZ8qS": {},
+      "49s2WdrRg": {},
+      "4U1UXiWJ7": {},
+      "4j6skO2hv": {},
+      "7qtYziPhZ": {},
+      "9S1zLOvUq": {},
+      "A9U0kDTrr": {},
+      "AjlNAueXU": {},
+      "Amphibien": {},
+      "BGDDpJmlU": {},
+      "Cg89XGJ2V": {},
+      "Ds0PUQ8jV": {},
+      "F3vexK8F9": {},
+      "HezifV2QO": {},
+      "I0vqKmPN4": {},
+      "Invert_br": {},
+      "JNdHY2JlI": {},
+      "Jfy4ZyLRR": {},
+      "JhfdRtrir": {},
+      "JrrMQlOFg": {},
+      "KJHTE4ZSY": {},
+      "Lxxq6zLiX": {},
+      "MY1TEqrLm": {},
+      "Mammifere": {},
+      "MhNokvz52": {},
+      "NQW4apRiB": {},
+      "Nom_arbre": {},
+      "OKAIO3hzJ": {},
+      "RrrjSUtcp": {},
+      "SctTTuHKE": {},
+      "SoaGqJe0y": {},
+      "TmHyuDhCC": {},
+      "UmOsxLXJu": {},
+      "WG08lztHv": {},
+      "WMGBbq5SF": {},
+      "X1WvITcmu": {},
+      "XR45rAYab": {},
+      "ZqQLedUXk": {},
+      "bvecihwq0": {},
+      "cEVtJKYYR": {},
+      "cZMEpFVpU": {},
+      "dEofK6SA2": {},
+      "dS3QpXO1F": {},
+      "dqavYAc0k": {},
+      "e3ZyAgVG2": {},
+      "eImP3dK2M": {},
+      "fAGAHQTnd": {},
+      "fBMCHhdLX": {},
+      "fq531zCax": {},
+      "ftQ0CGh4F": {},
+      "gGsdnXesx": {},
+      "gUl1qf9Qh": {},
+      "gps_arbre": {},
+      "i0Y3XUzsr": {},
+      "mGTZ7PnVn": {},
+      "mSq14hPia": {},
+      "nom_arbre": {},
+      "nvCN1IQaW": {},
+      "pc23c75nS": {},
+      "start_geo": {},
+      "tkE0eKK4g": {},
+      "uSQAhGbzl": {},
+      "uuFhSkdvi": {},
+      "veDcLF87y": {},
+      "zwfQrUkYo": {},
+      "Nom_commun": {},
+      "Photo_etat": {},
+      "Nom_arbre_1": {},
+      "calculation": {},
+      "description": {},
+      "photo_arbre": {},
+      "Date_enquete": {},
+      "date_enquete": {},
+      "photo_equipe": {},
+      "Photo_Apoueba": {},
+      "Photo_Zaranou": {},
+      "arbre_apoueba": {},
+      "arbre_zaranou": {},
+      "group_kt5ja56": {},
+      "group_ry4ca64": {},
+      "Membre_Apoueba": {},
+      "Membre_Zaranou": {},
+      "Membre_apoueba": {},
+      "Membre_zaranou": {},
+      "animal_observe": {},
+      "etat_sanitaire": {},
+      "grp_fc_apoueba": {},
+      "grp_fc_zaranou": {},
+      "indice_observe": {},
+      "membre_apoueba": {},
+      "membre_zaranou": {},
+      "Coordonnees_GPS": {},
+      "Photo_point_eau": {},
+      "equipe_collecte": {},
+      "membres_mission": {},
+      "numero_parcelle": {},
+      "Activite_observe": {},
+      "Nom_scientifique": {},
+      "nom_scientifique": {},
+      "Photo_observation": {},
+      "commentaire_arbre": {},
+      "observation_arbre": {},
+      "repeat_fc_apoueba": {},
+      "repeat_fc_zaranou": {},
+      "Vernaculaire_local": {},
+      "Foret_communautaire": {},
+      "Photo_observation_1": {},
+      "Photo_observation_2": {},
+      "Responsable_Apou_ba": {},
+      "Responsable_Apoueba": {},
+      "Responsable_Zaranou": {},
+      "foret_communautaire": {},
+      "responsable_apoueba": {},
+      "responsable_mission": {},
+      "responsable_zaranou": {},
+      "Etat_sanitaire_arbre": {},
+      "Photo_observation_02": {},
+      "Photo_observation_11": {},
+      "Photo_observation_12": {},
+      "Photo_observation_13": {},
+      "Photo_observation_14": {},
+      "facteurs_degradation": {},
+      "Photo_observation_003": {},
+      "Signature_Responsable": {},
+      "signature_responsable": {},
+      "Photo_observation_0001": {},
+      "Photo_observation_00001": {},
+      "Commentaires_Responsable": {},
+      "Photo_observation_000001": {},
+      "Pr_sence_de_points_d_eau": {},
+      "commentaires_responsable": {},
+      "_tat_sanitaire_de_l_arbre": {},
+      "afficher_nom_scientifique": {},
+      "autre_facteur_degradation": {},
+      "_2_For_t_communautaire_concern": {}
+    },
+    "kuid_names": {
+      "end": "4dp4KuezA",
+      "Autre": "xc7SIseY6",
+      "start": "VGLurI02r",
+      "today": "TpAQ66mkP",
+      "Oiseau": "MNbhbsdLf",
+      "device": "eoApwlTr7",
+      "Group_1": "jl8ns22",
+      "Reptile": "YnhPGWQlm",
+      "acceuil": "oGd2NeeKB",
+      "aq8mi17": "aq8mi17",
+      "fk6ct14": "fk6ct14",
+      "group_2": "oi0qo03",
+      "hn1xx08": "hn1xx08",
+      "jj7py77": "jj7py77",
+      "lm2qs48": "lm2qs48",
+      "logo_RA": "u9nn2uoRr",
+      "logo_ra": "zgcAN696s",
+      "qy7my43": "qy7my43",
+      "ri8rx02": "ri8rx02",
+      "un8ze35": "un8ze35",
+      "vh0ij04": "vh0ij04",
+      "wl2zz10": "wl2zz10",
+      "yi52e21": "yi52e21",
+      "/jl8ns22": "/jl8ns22",
+      "/oi0qo03": "/oi0qo03",
+      "Rongeurs": "huSGVnrn3",
+      "0fbbejf6i": "0fbbejf6i",
+      "0wyKJf2mt": "0wyKJf2mt",
+      "1AXjQTC5w": "1AXjQTC5w",
+      "2W5CaAEpB": "2W5CaAEpB",
+      "2Yrij3C1o": "2Yrij3C1o",
+      "3ZZSwAMXz": "3ZZSwAMXz",
+      "3yJMVZ8qS": "3yJMVZ8qS",
+      "49s2WdrRg": "49s2WdrRg",
+      "4U1UXiWJ7": "4U1UXiWJ7",
+      "4j6skO2hv": "4j6skO2hv",
+      "7qtYziPhZ": "7qtYziPhZ",
+      "9S1zLOvUq": "9S1zLOvUq",
+      "A9U0kDTrr": "A9U0kDTrr",
+      "AjlNAueXU": "AjlNAueXU",
+      "Amphibien": "eKbd4igg5",
+      "BGDDpJmlU": "BGDDpJmlU",
+      "Cg89XGJ2V": "Cg89XGJ2V",
+      "Ds0PUQ8jV": "Ds0PUQ8jV",
+      "F3vexK8F9": "F3vexK8F9",
+      "HezifV2QO": "HezifV2QO",
+      "I0vqKmPN4": "I0vqKmPN4",
+      "Invert_br": "EuWmYBNH8",
+      "JNdHY2JlI": "JNdHY2JlI",
+      "Jfy4ZyLRR": "Jfy4ZyLRR",
+      "JhfdRtrir": "JhfdRtrir",
+      "JrrMQlOFg": "JrrMQlOFg",
+      "KJHTE4ZSY": "KJHTE4ZSY",
+      "Lxxq6zLiX": "Lxxq6zLiX",
+      "MY1TEqrLm": "MY1TEqrLm",
+      "Mammifere": "DuvOolEfl",
+      "MhNokvz52": "MhNokvz52",
+      "NQW4apRiB": "NQW4apRiB",
+      "Nom_arbre": "hn1xx08",
+      "OKAIO3hzJ": "OKAIO3hzJ",
+      "RrrjSUtcp": "RrrjSUtcp",
+      "SctTTuHKE": "SctTTuHKE",
+      "SoaGqJe0y": "SoaGqJe0y",
+      "TmHyuDhCC": "TmHyuDhCC",
+      "UmOsxLXJu": "UmOsxLXJu",
+      "WG08lztHv": "WG08lztHv",
+      "WMGBbq5SF": "WMGBbq5SF",
+      "X1WvITcmu": "X1WvITcmu",
+      "XR45rAYab": "XR45rAYab",
+      "ZqQLedUXk": "ZqQLedUXk",
+      "bvecihwq0": "bvecihwq0",
+      "cEVtJKYYR": "cEVtJKYYR",
+      "cZMEpFVpU": "cZMEpFVpU",
+      "dEofK6SA2": "dEofK6SA2",
+      "dS3QpXO1F": "dS3QpXO1F",
+      "dqavYAc0k": "dqavYAc0k",
+      "e3ZyAgVG2": "e3ZyAgVG2",
+      "eImP3dK2M": "eImP3dK2M",
+      "fAGAHQTnd": "fAGAHQTnd",
+      "fBMCHhdLX": "fBMCHhdLX",
+      "fq531zCax": "fq531zCax",
+      "ftQ0CGh4F": "ftQ0CGh4F",
+      "gGsdnXesx": "gGsdnXesx",
+      "gUl1qf9Qh": "gUl1qf9Qh",
+      "gps_arbre": "dEbtmTHPY",
+      "i0Y3XUzsr": "i0Y3XUzsr",
+      "mGTZ7PnVn": "mGTZ7PnVn",
+      "mSq14hPia": "mSq14hPia",
+      "nom_arbre": "sbUP7eDg4",
+      "nvCN1IQaW": "nvCN1IQaW",
+      "pc23c75nS": "pc23c75nS",
+      "start_geo": "J7fd2qIlE",
+      "tkE0eKK4g": "tkE0eKK4g",
+      "uSQAhGbzl": "uSQAhGbzl",
+      "uuFhSkdvi": "uuFhSkdvi",
+      "veDcLF87y": "veDcLF87y",
+      "zwfQrUkYo": "zwfQrUkYo",
+      "Nom_commun": "MBzTYjAmB",
+      "Photo_etat": "GKjq0WCFz",
+      "Nom_arbre_1": "un8ze35",
+      "calculation": "yn7hj01",
+      "description": "qXZcr3equ",
+      "photo_arbre": "TLBK0YWi3",
+      "Date_enquete": "niKFBoTP0",
+      "date_enquete": "GlvLD21ga",
+      "photo_equipe": "Pw9v5R5oD",
+      "Photo_Apoueba": "kpXZqDcRp",
+      "Photo_Zaranou": "tt4M7nbUy",
+      "arbre_apoueba": "6y6q5FGtU",
+      "arbre_zaranou": "P6Urrdd5c",
+      "group_kt5ja56": "oi0qo03",
+      "group_ry4ca64": "jl8ns22",
+      "Membre_Apoueba": "GUjjXZQmK",
+      "Membre_Zaranou": "j2950U6Fh",
+      "Membre_apoueba": "mcuF82Nhl",
+      "Membre_zaranou": "5ykTQnSpx",
+      "animal_observe": "nIEG0qjC0",
+      "etat_sanitaire": "Qc9PgeTMO",
+      "grp_fc_apoueba": "JS1Jm0YTg",
+      "grp_fc_zaranou": "uYriT3hJ0",
+      "indice_observe": "Ij9C6Xxx5",
+      "membre_apoueba": "QsjWM2ZBA",
+      "membre_zaranou": "TcCVynprY",
+      "Coordonnees_GPS": "YNoZgCMCT",
+      "Photo_point_eau": "8BjICONzN",
+      "equipe_collecte": "l7nEgz9w1",
+      "membres_mission": "eZjkxDedy",
+      "numero_parcelle": "4WMs2KCsS",
+      "Activite_observe": "dB3c0QdJI",
+      "Nom_scientifique": "tp9sxh91X",
+      "nom_scientifique": "zBd7P6NZY",
+      "Photo_observation": "mVfj3f0P9",
+      "commentaire_arbre": "PKTtmYAJQ",
+      "observation_arbre": "D7quRRsS0",
+      "repeat_fc_apoueba": "rNx49GZ55",
+      "repeat_fc_zaranou": "XpOgv03gz",
+      "Vernaculaire_local": "qy7my43",
+      "Foret_communautaire": "fk6ct14",
+      "Photo_observation_1": "1zWvMRADw",
+      "Photo_observation_2": "xXJizGVGW",
+      "Responsable_Apou_ba": "oi22t80",
+      "Responsable_Apoueba": "ECTF1Qu98",
+      "Responsable_Zaranou": "kC9T6ehZH",
+      "foret_communautaire": "Gs2QI5lyX",
+      "responsable_apoueba": "xZei3mTQ0",
+      "responsable_mission": "414cygwid",
+      "responsable_zaranou": "esFL7Lm6T",
+      "Etat_sanitaire_arbre": "rKOC7zzbv",
+      "Photo_observation_02": "s9nU1d2KU",
+      "Photo_observation_11": "LAFmvnzOv",
+      "Photo_observation_12": "SGR0m5xnv",
+      "Photo_observation_13": "70SxeiWPq",
+      "Photo_observation_14": "dAI5yXADL",
+      "facteurs_degradation": "IntTrM1ON",
+      "Photo_observation_003": "Qn1A4zc6V",
+      "Signature_Responsable": "tjVmmtzd9",
+      "signature_responsable": "5NEtTedI2",
+      "Photo_observation_0001": "6nU8K6SbD",
+      "Photo_observation_00001": "fm7GOwaFm",
+      "Commentaires_Responsable": "nfAraNAhW",
+      "Photo_observation_000001": "1GzedhKRO",
+      "Pr_sence_de_points_d_eau": "ghq6GkC6X",
+      "commentaires_responsable": "mynzxCSTN",
+      "_tat_sanitaire_de_l_arbre": "yy5zb05",
+      "afficher_nom_scientifique": "F9uvTD6IJ",
+      "autre_facteur_degradation": "HsHc59eqT",
+      "_2_For_t_communautaire_concern": "wmit7zF32"
+    }
+  },
+  "report_custom": {},
+  "advanced_features": {
+    "_version": "20250820"
+  },
+  "map_styles": {},
+  "map_custom": {},
+  "content": {
+    "schema": "1",
+    "survey": [
+      {
+        "name": "start",
+        "type": "start",
+        "$kuid": "VGLurI02r",
+        "$xpath": "start",
+        "$autoname": "start"
+      },
+      {
+        "name": "end",
+        "type": "end",
+        "$kuid": "4dp4KuezA",
+        "$xpath": "end",
+        "$autoname": "end"
+      },
+      {
+        "name": "start_geo",
+        "type": "start-geopoint",
+        "$kuid": "J7fd2qIlE",
+        "$xpath": "start_geo",
+        "$autoname": "start_geo"
+      },
+      {
+        "name": "device",
+        "type": "deviceid",
+        "$kuid": "eoApwlTr7",
+        "$xpath": "device",
+        "$autoname": "device"
+      },
+      {
+        "name": "today",
+        "type": "today",
+        "$kuid": "TpAQ66mkP",
+        "$xpath": "today",
+        "$autoname": "today"
+      },
+      {
+        "name": "acceuil",
+        "type": "begin_group",
+        "$kuid": "oGd2NeeKB",
+        "label": [
+          "Information",
+          null
+        ],
+        "$xpath": "acceuil",
+        "$autoname": "acceuil",
+        "appearance": "field-list"
+      },
+      {
+        "name": "logo_ra",
+        "type": "note",
+        "$kuid": "zgcAN696s",
+        "label": [
+          "## 🌳 Bienvenue sur TechForest Monitoring",
+          null
+        ],
+        "$xpath": "acceuil/logo_ra",
+        "$autoname": "logo_ra",
+        "media::image": [
+          null,
+          "img_suivi_planting_arbre.png"
+        ]
+      },
+      {
+        "name": "description",
+        "type": "note",
+        "$kuid": "qXZcr3equ",
+        "label": [
+          "Ce formulaire est conçu pour assurer le **suivi de l’état sanitaire des arbres reboisés** dans les forêts communautaires de **Zaranou** et d’**Apouéba**.\n\nIl permet de collecter des informations sur l’équipe de mission, la parcelle suivie, l’espèce observée, son nom scientifique, son état sanitaire, les facteurs éventuels de dégradation, ainsi que les coordonnées GPS et les preuves photographiques associées.\n\n- **Objectif principal :** évaluer l’état des arbres reboisés et identifier les signes de dégradation.\n- **Données collectées :** numéro de parcelle, espèce, état sanitaire, facteurs de dégradation, photo et localisation GPS.\n- **Utilité :** suivre l’évolution des plantations, repérer les arbres en mauvais état et orienter les actions d’entretien, de protection ou de regarnissage.\n\n**Important :** chaque observation doit être localisée avec précision et accompagnée d’une photo lorsque cela est possible.",
+          null
+        ],
+        "$xpath": "acceuil/description",
+        "$autoname": "description"
+      },
+      {
+        "type": "end_group",
+        "$kuid": "7qtYziPhZ"
+      },
+      {
+        "name": "equipe_collecte",
+        "type": "begin_group",
+        "$kuid": "l7nEgz9w1",
+        "label": [
+          "Métadonnées et équipe de collecte",
+          null
+        ],
+        "$xpath": "equipe_collecte",
+        "$autoname": "equipe_collecte",
+        "appearance": "field-list"
+      },
+      {
+        "name": "date_enquete",
+        "type": "date",
+        "$kuid": "GlvLD21ga",
+        "label": [
+          "Date de l’enquête",
+          null
+        ],
+        "$xpath": "equipe_collecte/date_enquete",
+        "default": "today()",
+        "required": true,
+        "$autoname": "date_enquete"
+      },
+      {
+        "name": "foret_communautaire",
+        "type": "select_one",
+        "$kuid": "Gs2QI5lyX",
+        "label": [
+          "Forêt communautaire concernée",
+          null
+        ],
+        "$xpath": "equipe_collecte/foret_communautaire",
+        "required": true,
+        "$autoname": "foret_communautaire",
+        "select_from_list_name": "foret_communautaire"
+      },
+      {
+        "hint": [
+          "Sélectionnez les membres disponibles pour la forêt communautaire choisie.",
+          null
+        ],
+        "name": "membres_mission",
+        "type": "select_multiple",
+        "$kuid": "eZjkxDedy",
+        "label": [
+          "Membres de la mission",
+          null
+        ],
+        "$xpath": "equipe_collecte/membres_mission",
+        "required": true,
+        "$autoname": "membres_mission",
+        "choice_filter": "${foret_communautaire}=foret",
+        "select_from_list_name": "membre_mission"
+      },
+      {
+        "hint": [
+          "Le responsable doit obligatoirement faire partie des membres sélectionnés.",
+          null
+        ],
+        "name": "responsable_mission",
+        "type": "select_one",
+        "$kuid": "414cygwid",
+        "label": [
+          "Responsable de la mission",
+          null
+        ],
+        "$xpath": "equipe_collecte/responsable_mission",
+        "required": true,
+        "$autoname": "responsable_mission",
+        "choice_filter": "selected(${membres_mission}, name)",
+        "select_from_list_name": "membre_mission"
+      },
+      {
+        "name": "photo_equipe",
+        "type": "image",
+        "$kuid": "Pw9v5R5oD",
+        "label": [
+          "Photo de l’équipe de collecte",
+          null
+        ],
+        "$xpath": "equipe_collecte/photo_equipe",
+        "required": true,
+        "$autoname": "photo_equipe",
+        "parameters": "max-pixels=2048"
+      },
+      {
+        "type": "end_group",
+        "$kuid": "TmHyuDhCC"
+      },
+      {
+        "name": "observation_arbre",
+        "type": "begin_repeat",
+        "$kuid": "D7quRRsS0",
+        "label": [
+          "Observation d’un arbre reboisé",
+          null
+        ],
+        "$xpath": "observation_arbre",
+        "$autoname": "observation_arbre",
+        "appearance": "field-list"
+      },
+      {
+        "hint": [
+          "Saisir le code ou le numéro de la parcelle où se trouve l’arbre observé.",
+          null
+        ],
+        "name": "numero_parcelle",
+        "type": "text",
+        "$kuid": "4WMs2KCsS",
+        "label": [
+          "Numéro de la parcelle reboisée",
+          null
+        ],
+        "$xpath": "observation_arbre/numero_parcelle",
+        "required": true,
+        "$autoname": "numero_parcelle",
+        "constraint": "string-length(normalize-space(.)) > 0",
+        "constraint_message": "Veuillez saisir un numéro de parcelle valide."
+      },
+      {
+        "hint": [
+          "La liste est filtrée automatiquement selon la forêt communautaire sélectionnée.",
+          null
+        ],
+        "name": "nom_arbre",
+        "type": "select_one",
+        "$kuid": "sbUP7eDg4",
+        "label": [
+          "Nom commun ou local de l’arbre",
+          null
+        ],
+        "$xpath": "observation_arbre/nom_arbre",
+        "required": true,
+        "$autoname": "nom_arbre",
+        "choice_filter": "${foret_communautaire}=foret",
+        "select_from_list_name": "arbre"
+      },
+      {
+        "name": "nom_scientifique",
+        "type": "calculate",
+        "$kuid": "zBd7P6NZY",
+        "$xpath": "observation_arbre/nom_scientifique",
+        "$autoname": "nom_scientifique",
+        "calculation": "instance('arbre')/root/item[name=${nom_arbre}]/nom_scientifique"
+      },
+      {
+        "name": "afficher_nom_scientifique",
+        "type": "note",
+        "$kuid": "F9uvTD6IJ",
+        "label": [
+          "Nom scientifique : ${nom_scientifique}",
+          null
+        ],
+        "$xpath": "observation_arbre/afficher_nom_scientifique",
+        "$autoname": "afficher_nom_scientifique"
+      },
+      {
+        "name": "etat_sanitaire",
+        "type": "select_one",
+        "$kuid": "Qc9PgeTMO",
+        "label": [
+          "État sanitaire général de l’arbre",
+          null
+        ],
+        "$xpath": "observation_arbre/etat_sanitaire",
+        "required": true,
+        "$autoname": "etat_sanitaire",
+        "select_from_list_name": "etat_sanitaire"
+      },
+      {
+        "hint": [
+          "À renseigner uniquement si l’arbre est dégradé, très dégradé ou mort.",
+          null
+        ],
+        "name": "facteurs_degradation",
+        "type": "select_multiple",
+        "$kuid": "IntTrM1ON",
+        "label": [
+          "Facteurs de dégradation observés",
+          null
+        ],
+        "$xpath": "observation_arbre/facteurs_degradation",
+        "relevant": "${etat_sanitaire} = 'degrade' or ${etat_sanitaire} = 'tres_degrade' or ${etat_sanitaire} = 'mort'",
+        "required": false,
+        "$autoname": "facteurs_degradation",
+        "select_from_list_name": "facteur_degradation"
+      },
+      {
+        "name": "autre_facteur_degradation",
+        "type": "text",
+        "$kuid": "HsHc59eqT",
+        "label": [
+          "Précisez l’autre facteur de dégradation",
+          null
+        ],
+        "$xpath": "observation_arbre/autre_facteur_degradation",
+        "relevant": "selected(${facteurs_degradation}, 'autre')",
+        "required": true,
+        "$autoname": "autre_facteur_degradation",
+        "constraint": "string-length(normalize-space(.)) > 0",
+        "constraint_message": "Veuillez préciser l’autre facteur de dégradation."
+      },
+      {
+        "hint": [
+          "Prendre une photo claire de l’arbre et de son état sanitaire.",
+          null
+        ],
+        "name": "photo_arbre",
+        "type": "image",
+        "$kuid": "TLBK0YWi3",
+        "label": [
+          "Photo de l’arbre",
+          null
+        ],
+        "$xpath": "observation_arbre/photo_arbre",
+        "required": true,
+        "$autoname": "photo_arbre",
+        "parameters": "max-pixels=2048"
+      },
+      {
+        "hint": [
+          "Enregistrer le point GPS au niveau de l’arbre observé.",
+          null
+        ],
+        "name": "gps_arbre",
+        "type": "geopoint",
+        "$kuid": "dEbtmTHPY",
+        "label": [
+          "Coordonnées GPS de l’arbre",
+          null
+        ],
+        "$xpath": "observation_arbre/gps_arbre",
+        "required": true,
+        "$autoname": "gps_arbre"
+      },
+      {
+        "name": "commentaire_arbre",
+        "type": "text",
+        "$kuid": "PKTtmYAJQ",
+        "label": [
+          "Commentaire sur l’arbre observé",
+          null
+        ],
+        "$xpath": "observation_arbre/commentaire_arbre",
+        "required": false,
+        "$autoname": "commentaire_arbre"
+      },
+      {
+        "type": "end_repeat",
+        "$kuid": "SoaGqJe0y"
+      },
+      {
+        "name": "commentaires_responsable",
+        "type": "text",
+        "$kuid": "mynzxCSTN",
+        "label": [
+          "Commentaires du responsable de la collecte",
+          null
+        ],
+        "$xpath": "commentaires_responsable",
+        "required": false,
+        "$autoname": "commentaires_responsable"
+      },
+      {
+        "name": "signature_responsable",
+        "type": "image",
+        "$kuid": "5NEtTedI2",
+        "label": [
+          "Signature du responsable de la collecte",
+          null
+        ],
+        "$xpath": "signature_responsable",
+        "required": true,
+        "$autoname": "signature_responsable",
+        "appearance": "draw",
+        "parameters": "max-pixels=2048"
+      }
+    ],
+    "choices": [
+      {
+        "name": "zaranou",
+        "$kuid": "4gXz5y1uu",
+        "label": [
+          "Zaranou",
+          null
+        ],
+        "list_name": "foret_communautaire",
+        "$autovalue": "zaranou"
+      },
+      {
+        "name": "apoueba",
+        "$kuid": "BGxypZGOp",
+        "label": [
+          "Apouéba",
+          null
+        ],
+        "list_name": "foret_communautaire",
+        "$autovalue": "apoueba"
+      },
+      {
+        "name": "ettien_ehoussou_jules_zaranou",
+        "$kuid": "t3awnZxBz",
+        "foret": "zaranou",
+        "label": [
+          "ETTIEN Ehoussou Jules",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "ettien_ehoussou_jules_zaranou"
+      },
+      {
+        "name": "konin_tano_hermann_zaranou",
+        "$kuid": "c0Pu3WpAg",
+        "foret": "zaranou",
+        "label": [
+          "KONIN Tano Hermann",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "konin_tano_hermann_zaranou"
+      },
+      {
+        "name": "konan_kouadio_sylvere_zaranou",
+        "$kuid": "e3XR9gDNF",
+        "foret": "zaranou",
+        "label": [
+          "KONAN Kouadio Sylvere",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "konan_kouadio_sylvere_zaranou"
+      },
+      {
+        "name": "dongui_kouadio_jp_zaranou",
+        "$kuid": "HstD5JTlP",
+        "foret": "zaranou",
+        "label": [
+          "DONGUI Kouadio J.P",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "dongui_kouadio_jp_zaranou"
+      },
+      {
+        "name": "koffi_aka_david_zaranou",
+        "$kuid": "E3X3LLJHV",
+        "foret": "zaranou",
+        "label": [
+          "KOFFI Aka David",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "koffi_aka_david_zaranou"
+      },
+      {
+        "name": "tchimou_arsene_zaranou",
+        "$kuid": "WlbQUKLp2",
+        "foret": "zaranou",
+        "label": [
+          "TCHIMOU Arsène",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "tchimou_arsene_zaranou"
+      },
+      {
+        "name": "amoikon_jean_marie_zaranou",
+        "$kuid": "AzA6dvHLy",
+        "foret": "zaranou",
+        "label": [
+          "AMOIKON Jean-Marie",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "amoikon_jean_marie_zaranou"
+      },
+      {
+        "name": "ettien_tehia_zaranou",
+        "$kuid": "SF1IEhpHO",
+        "foret": "zaranou",
+        "label": [
+          "ETTIEN Téhia",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "ettien_tehia_zaranou"
+      },
+      {
+        "name": "ahimou_noelle_zaranou",
+        "$kuid": "E7DrdUQTR",
+        "foret": "zaranou",
+        "label": [
+          "AHIMOU Noëlle",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "ahimou_noelle_zaranou"
+      },
+      {
+        "name": "aka_adony_zaranou",
+        "$kuid": "zDZuAQfjr",
+        "foret": "zaranou",
+        "label": [
+          "AKA Adony",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "aka_adony_zaranou"
+      },
+      {
+        "name": "gangame_issouf_zaranou",
+        "$kuid": "M6byOJpwl",
+        "foret": "zaranou",
+        "label": [
+          "GANGAMÉ Issouf",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "gangame_issouf_zaranou"
+      },
+      {
+        "name": "ettien_ehoussou_jules_apoueba",
+        "$kuid": "ZcAKXDyDj",
+        "foret": "apoueba",
+        "label": [
+          "ETTIEN Ehoussou Jules",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "ettien_ehoussou_jules_apoueba"
+      },
+      {
+        "name": "kouame_aka_kouadio_apoueba",
+        "$kuid": "VSdZWMO0C",
+        "foret": "apoueba",
+        "label": [
+          "KOUAME Aka Kouadio",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "kouame_aka_kouadio_apoueba"
+      },
+      {
+        "name": "kouame_diakalan_apoueba",
+        "$kuid": "MyDetALpk",
+        "foret": "apoueba",
+        "label": [
+          "KOUAME Diakalan",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "kouame_diakalan_apoueba"
+      },
+      {
+        "name": "kouakou_aman_hubert_apoueba",
+        "$kuid": "4Dw9OnmK8",
+        "foret": "apoueba",
+        "label": [
+          "KOUAKOU Aman Hubert",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "kouakou_aman_hubert_apoueba"
+      },
+      {
+        "name": "sansan_kambou_apoueba",
+        "$kuid": "unoeIKRu9",
+        "foret": "apoueba",
+        "label": [
+          "SANSAN Kambou",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "sansan_kambou_apoueba"
+      },
+      {
+        "name": "nzo_kouassi_guillaume_apoueba",
+        "$kuid": "A3L3BICYQ",
+        "foret": "apoueba",
+        "label": [
+          "N'ZO Kouassi Guillaume",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "nzo_kouassi_guillaume_apoueba"
+      },
+      {
+        "name": "kumassi_adom_robert_apoueba",
+        "$kuid": "Fff0wVPI4",
+        "foret": "apoueba",
+        "label": [
+          "KUMASSI Adom Robert",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "kumassi_adom_robert_apoueba"
+      },
+      {
+        "name": "ehouman_kouame_jean_jacques_apoueba",
+        "$kuid": "cKJQL3nCa",
+        "foret": "apoueba",
+        "label": [
+          "EHOUMAN Kouame Jean Jacques",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "ehouman_kouame_jean_jacques_apoueba"
+      },
+      {
+        "name": "kouakou_adou_apoueba",
+        "$kuid": "Z1Qpj663R",
+        "foret": "apoueba",
+        "label": [
+          "KOUAKOU Adou",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "kouakou_adou_apoueba"
+      },
+      {
+        "name": "koffi_ebrottie_desnoces_apoueba",
+        "$kuid": "LpReimlUl",
+        "foret": "apoueba",
+        "label": [
+          "KOFFI Ebrottié Desnoces",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "koffi_ebrottie_desnoces_apoueba"
+      },
+      {
+        "name": "kouame_amoakon_apoueba",
+        "$kuid": "WbKDeBR5q",
+        "foret": "apoueba",
+        "label": [
+          "KOUAME Amoakon",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "kouame_amoakon_apoueba"
+      },
+      {
+        "name": "ettien_diapanini_apoueba",
+        "$kuid": "nGnDYJqcy",
+        "foret": "apoueba",
+        "label": [
+          "ETTIEN Diapanini",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "ettien_diapanini_apoueba"
+      },
+      {
+        "name": "brou_bouadou_apoueba",
+        "$kuid": "jQ8eggErh",
+        "foret": "apoueba",
+        "label": [
+          "BROU Bouadou",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "brou_bouadou_apoueba"
+      },
+      {
+        "name": "tieni_affoua_apoueba",
+        "$kuid": "OcajyDxDi",
+        "foret": "apoueba",
+        "label": [
+          "TIÉNI Affoua",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "tieni_affoua_apoueba"
+      },
+      {
+        "name": "eponon_deda_apoueba",
+        "$kuid": "r1K0MKtrP",
+        "foret": "apoueba",
+        "label": [
+          "EPONON Deda",
+          null
+        ],
+        "list_name": "membre_mission",
+        "$autovalue": "eponon_deda_apoueba"
+      },
+      {
+        "name": "frake_zaranou",
+        "$kuid": "wEXLDeHBZ",
+        "foret": "zaranou",
+        "label": [
+          "Fraké",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "frake_zaranou",
+        "nom_scientifique": "Terminalia superba"
+      },
+      {
+        "name": "framire_zaranou",
+        "$kuid": "qQMSxQsYo",
+        "foret": "zaranou",
+        "label": [
+          "Framiré",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "framire_zaranou",
+        "nom_scientifique": "Terminalia ivorensis"
+      },
+      {
+        "name": "bois_bete_zaranou",
+        "$kuid": "q5SCsKk6f",
+        "foret": "zaranou",
+        "label": [
+          "Bois bété",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "bois_bete_zaranou",
+        "nom_scientifique": "Mansonia altissima"
+      },
+      {
+        "name": "gmelina_zaranou",
+        "$kuid": "wz69VsRi8",
+        "foret": "zaranou",
+        "label": [
+          "Gmélina",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "gmelina_zaranou",
+        "nom_scientifique": "Gmelina arborea"
+      },
+      {
+        "name": "makore_zaranou",
+        "$kuid": "2w5C9nujD",
+        "foret": "zaranou",
+        "label": [
+          "Makoré",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "makore_zaranou",
+        "nom_scientifique": "Tieghemella heckelii"
+      },
+      {
+        "name": "badi_zaranou",
+        "$kuid": "NyuyOxUfk",
+        "foret": "zaranou",
+        "label": [
+          "Badi",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "badi_zaranou",
+        "nom_scientifique": "Nauclea diderrichii"
+      },
+      {
+        "name": "acajou_zaranou",
+        "$kuid": "v3z1Oq3bU",
+        "foret": "zaranou",
+        "label": [
+          "Acajou",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "acajou_zaranou",
+        "nom_scientifique": "Khaya ivorensis"
+      },
+      {
+        "name": "fromager_zaranou",
+        "$kuid": "rhWloA0Dx",
+        "foret": "zaranou",
+        "label": [
+          "Fromager",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "fromager_zaranou",
+        "nom_scientifique": "Ceiba pentandra"
+      },
+      {
+        "name": "iroko_zaranou",
+        "$kuid": "6q3sfLG7p",
+        "foret": "zaranou",
+        "label": [
+          "Iroko",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "iroko_zaranou",
+        "nom_scientifique": "Milicia excelsa"
+      },
+      {
+        "name": "frake_apoueba",
+        "$kuid": "zlCzyehED",
+        "foret": "apoueba",
+        "label": [
+          "Fraké",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "frake_apoueba",
+        "nom_scientifique": "Terminalia superba"
+      },
+      {
+        "name": "framire_apoueba",
+        "$kuid": "BKJjeFFgg",
+        "foret": "apoueba",
+        "label": [
+          "Framiré",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "framire_apoueba",
+        "nom_scientifique": "Terminalia ivorensis"
+      },
+      {
+        "name": "bois_bete_apoueba",
+        "$kuid": "LnV2NePqJ",
+        "foret": "apoueba",
+        "label": [
+          "Bois bété",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "bois_bete_apoueba",
+        "nom_scientifique": "Mansonia altissima"
+      },
+      {
+        "name": "cedrela_apoueba",
+        "$kuid": "ZU69T3ZrN",
+        "foret": "apoueba",
+        "label": [
+          "Cedrela",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "cedrela_apoueba",
+        "nom_scientifique": "Cedrela odorata"
+      },
+      {
+        "name": "gmelina_apoueba",
+        "$kuid": "5JUmBBSxj",
+        "foret": "apoueba",
+        "label": [
+          "Gmélina",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "gmelina_apoueba",
+        "nom_scientifique": "Gmelina arborea"
+      },
+      {
+        "name": "tiama_apoueba",
+        "$kuid": "9uYxFhvyL",
+        "foret": "apoueba",
+        "label": [
+          "Tiama",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "tiama_apoueba",
+        "nom_scientifique": "Entandrophragma angolense"
+      },
+      {
+        "name": "badi_apoueba",
+        "$kuid": "JphSqngaG",
+        "foret": "apoueba",
+        "label": [
+          "Badi",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "badi_apoueba",
+        "nom_scientifique": "Nauclea diderrichii"
+      },
+      {
+        "name": "fromager_apoueba",
+        "$kuid": "HoDvCLpfq",
+        "foret": "apoueba",
+        "label": [
+          "Fromager",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "fromager_apoueba",
+        "nom_scientifique": "Ceiba pentandra"
+      },
+      {
+        "name": "acajou_apoueba",
+        "$kuid": "iU8evQ6Eh",
+        "foret": "apoueba",
+        "label": [
+          "Acajou",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "acajou_apoueba",
+        "nom_scientifique": "Khaya ivorensis"
+      },
+      {
+        "name": "petit_cola_apoueba",
+        "$kuid": "UsNMIE9sN",
+        "foret": "apoueba",
+        "label": [
+          "Petit cola",
+          null
+        ],
+        "list_name": "arbre",
+        "$autovalue": "petit_cola_apoueba",
+        "nom_scientifique": "Garcinia kola"
+      },
+      {
+        "name": "tres_bon_etat",
+        "$kuid": "GEFTXgJb2",
+        "label": [
+          "Très bon état (croissance vigoureuse, feuillage dense)",
+          null
+        ],
+        "list_name": "etat_sanitaire",
+        "$autovalue": "tres_bon_etat"
+      },
+      {
+        "name": "bon_etat",
+        "$kuid": "BuRgbMJ4U",
+        "label": [
+          "Bon état (croissance normale)",
+          null
+        ],
+        "list_name": "etat_sanitaire",
+        "$autovalue": "bon_etat"
+      },
+      {
+        "name": "etat_moyen",
+        "$kuid": "gWI28zZMY",
+        "label": [
+          "État moyen (croissance lente ou irrégulière)",
+          null
+        ],
+        "list_name": "etat_sanitaire",
+        "$autovalue": "etat_moyen"
+      },
+      {
+        "name": "degrade",
+        "$kuid": "V2jtiWqJe",
+        "label": [
+          "Dégradé (stress, maladie ou dommages visibles)",
+          null
+        ],
+        "list_name": "etat_sanitaire",
+        "$autovalue": "degrade"
+      },
+      {
+        "name": "tres_degrade",
+        "$kuid": "XN9UtXO3h",
+        "label": [
+          "Très dégradé (arbre fortement endommagé)",
+          null
+        ],
+        "list_name": "etat_sanitaire",
+        "$autovalue": "tres_degrade"
+      },
+      {
+        "name": "mort",
+        "$kuid": "zm4MiSZ77",
+        "label": [
+          "Mort",
+          null
+        ],
+        "list_name": "etat_sanitaire",
+        "$autovalue": "mort"
+      },
+      {
+        "name": "attaque_ravageurs",
+        "$kuid": "2QRP2cTZe",
+        "label": [
+          "Attaque de ravageurs",
+          null
+        ],
+        "list_name": "facteur_degradation",
+        "$autovalue": "attaque_ravageurs"
+      },
+      {
+        "name": "blessures_mecaniques",
+        "$kuid": "NWH9lFc0b",
+        "label": [
+          "Blessures mécaniques",
+          null
+        ],
+        "list_name": "facteur_degradation",
+        "$autovalue": "blessures_mecaniques"
+      },
+      {
+        "name": "broutage_animaux",
+        "$kuid": "DUR0CUHi3",
+        "label": [
+          "Broutage par animaux",
+          null
+        ],
+        "list_name": "facteur_degradation",
+        "$autovalue": "broutage_animaux"
+      },
+      {
+        "name": "etouffement_herbes",
+        "$kuid": "BdnBfNJWn",
+        "label": [
+          "Arbre étouffé par les herbes",
+          null
+        ],
+        "list_name": "facteur_degradation",
+        "$autovalue": "etouffement_herbes"
+      },
+      {
+        "name": "brulure_feu_brousse",
+        "$kuid": "LuF1rLKpC",
+        "label": [
+          "Arbre brûlé / feu de brousse",
+          null
+        ],
+        "list_name": "facteur_degradation",
+        "$autovalue": "brulure_feu_brousse"
+      },
+      {
+        "name": "parcelle_inondee",
+        "$kuid": "to2X7tohe",
+        "label": [
+          "Parcelle inondée",
+          null
+        ],
+        "list_name": "facteur_degradation",
+        "$autovalue": "parcelle_inondee"
+      },
+      {
+        "name": "autre",
+        "$kuid": "Z1uGflAl1",
+        "label": [
+          "Autre",
+          null
+        ],
+        "list_name": "facteur_degradation",
+        "$autovalue": "autre"
+      }
+    ],
+    "settings": {
+      "version": "20260523",
+      "id_string": "suivi_sanitaire_arbres_reboises",
+      "instance_name": "concat(${foret_communautaire}, ' - ', ${date_enquete})",
+      "default_language": "French"
+    },
+    "translated": [
+      "hint",
+      "label",
+      "media::image"
+    ],
+    "translations": [
+      "French",
+      null
+    ]
+  },
+  "downloads": [
+    {
+      "format": "xls",
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/?format=json.xls"
+    },
+    {
+      "format": "xml",
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/?format=json.xml"
+    }
+  ],
+  "embeds": [
+    {
+      "format": "xls",
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/xls/?format=json"
+    },
+    {
+      "format": "xform",
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/xform/?format=json"
+    }
+  ],
+  "analysis_form_json": {
+    "additional_fields": []
+  },
+  "xform_link": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/xform/?format=json",
+  "hooks_link": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/hooks/?format=json",
+  "tag_string": "",
+  "uid": "afG6rFRWm3NHqfB5P3g59q",
+  "kind": "asset",
+  "xls_link": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/xls/?format=json",
+  "name": "TechForest : Suivi des arbres reboisés des forêts communautaires de Zaranou et Apouéba",
+  "assignable_permissions": [
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/permissions/view_asset/?format=json",
+      "label": "View form"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/permissions/change_asset/?format=json",
+      "label": "Edit form"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/permissions/manage_asset/?format=json",
+      "label": "Manage project"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/permissions/add_submissions/?format=json",
+      "label": "Add submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/permissions/view_submissions/?format=json",
+      "label": "View submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/permissions/partial_submissions/?format=json",
+      "label": {
+        "default": "Act on submissions only from specific users",
+        "view_submissions": "View submissions only from specific users",
+        "change_submissions": "Edit submissions only from specific users",
+        "delete_submissions": "Delete submissions only from specific users",
+        "validate_submissions": "Validate submissions only from specific users"
+      }
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/permissions/change_submissions/?format=json",
+      "label": "Edit submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/permissions/delete_submissions/?format=json",
+      "label": "Delete submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/permissions/validate_submissions/?format=json",
+      "label": "Validate submissions"
+    }
+  ],
+  "permissions": [
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/p98XMx3xbeFQdYXyzmnBqf/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/AnonymousUser/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/add_submissions/?format=json",
+      "label": "Add submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/pkZ6SdPyruUhXBN9VrqKvb/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/AnonymousUser/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/view_asset/?format=json",
+      "label": "View form"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/pvywnVt56gfFv3qAg5hJr8/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/AnonymousUser/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/view_submissions/?format=json",
+      "label": "View submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/pA6L6TEXZpHKJkm8s58tYH/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/avocet2025/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/add_submissions/?format=json",
+      "label": "Add submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/pg3Mdo5Zxmam8XLA4LuRus/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/avocet2025/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/change_asset/?format=json",
+      "label": "Edit form"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/pcDeaJNL6SFeDSMo6DUAsn/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/avocet2025/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/change_submissions/?format=json",
+      "label": "Edit submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/p8dEZqyGV2GbETnt7BbQZC/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/avocet2025/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/delete_submissions/?format=json",
+      "label": "Delete submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/pUbR9oW7tECo7woPZr4Utk/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/avocet2025/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/manage_asset/?format=json",
+      "label": "Manage project"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/pHkSgkE3eBvafYdLKe7giD/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/avocet2025/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/validate_submissions/?format=json",
+      "label": "Validate submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/pY2wJ6hGM6b6Fx4F3nuyBH/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/avocet2025/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/view_asset/?format=json",
+      "label": "View form"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/pY4hDgCC2YpFbzMCTnz85u/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/avocet2025/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/view_submissions/?format=json",
+      "label": "View submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/pyxkshpwpwxRjmSCfUjVVY/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/techforest_01/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/add_submissions/?format=json",
+      "label": "Add submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/pPsQrKeTqkk5tALsJmsRL8/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/techforest_01/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/change_asset/?format=json",
+      "label": "Edit form"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/pjhSrhyz6xC6ihh6tNhgcp/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/techforest_01/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/change_submissions/?format=json",
+      "label": "Edit submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/pb7HDPxJoc6CmXaK2hranS/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/techforest_01/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/delete_submissions/?format=json",
+      "label": "Delete submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/pRpUw4zQsquXGZuJEsWbyc/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/techforest_01/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/manage_asset/?format=json",
+      "label": "Manage project"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/p9ZLJgfz5o7ALDf4mkdKiR/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/techforest_01/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/validate_submissions/?format=json",
+      "label": "Validate submissions"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/ptLxwo4Ks46AMDKqUA69yc/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/techforest_01/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/view_asset/?format=json",
+      "label": "View form"
+    },
+    {
+      "url": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/permission-assignments/p6NTZNa9iK7AH7LQodNSHS/?format=json",
+      "user": "https://kf.kobotoolbox.org/api/v2/users/techforest_01/?format=json",
+      "permission": "https://kf.kobotoolbox.org/api/v2/permissions/view_submissions/?format=json",
+      "label": "View submissions"
+    }
+  ],
+  "effective_permissions": [
+    {
+      "codename": "view_asset"
+    },
+    {
+      "codename": "add_submissions"
+    },
+    {
+      "codename": "delete_asset"
+    },
+    {
+      "codename": "change_asset"
+    },
+    {
+      "codename": "delete_submissions"
+    },
+    {
+      "codename": "view_submissions"
+    },
+    {
+      "codename": "validate_submissions"
+    },
+    {
+      "codename": "change_submissions"
+    },
+    {
+      "codename": "manage_asset"
+    }
+  ],
+  "exports": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/exports/?format=json",
+  "export_settings": [],
+  "data": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/data/?format=json",
+  "children": {
+    "count": 0
+  },
+  "subscribers_count": 0,
+  "status": "public",
+  "access_types": null,
+  "data_sharing": {},
+  "paired_data": "https://kf.kobotoolbox.org/api/v2/assets/afG6rFRWm3NHqfB5P3g59q/paired-data/?format=json",
+  "project_ownership": null,
+  "owner_label": "techforest_01",
+  "last_modified_by": "techforest_01"
+}
