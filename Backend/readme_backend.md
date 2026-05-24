@@ -54,6 +54,8 @@ pip install -r requirements.txt
 
 Variables principales a renseigner :
 
+En Docker/Dokploy, le conteneur n'embarque pas `Backend/.env`. Il faut donc injecter au minimum `DATABASE_URL` et, si vous utilisez un pooler PostgreSQL, `DIRECT_URL` dans les variables d'environnement du service.
+
 | Variable | Description |
 |---|---|
 | DATABASE_URL | URL PostgreSQL utilisee par l'application |

@@ -1,10 +1,10 @@
-from pydantic_settings import BaseSettings
 from functools import lru_cache
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     # Database (pooler pour l'app, direct pour les migrations)
-    DATABASE_URL: str = "postgresql://user:password@localhost:5432/techforest_db"
+    DATABASE_URL: str = ""
     DIRECT_URL: str = ""
 
     # JWT
@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     DEFAULT_USER_FULLNAME: str = "Utilisateur TechFOREST"
     DEFAULT_USER_ROLE: str = "viewer"
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ("Backend/.env", ".env"), "env_file_encoding": "utf-8"}
 
     @property
     def cors_origins_list(self) -> list[str]:
@@ -68,4 +68,11 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    if not settings.DATABASE_URL.strip():
+        raise RuntimeError(
+            "DATABASE_URL is required. Set it in the environment or in Backend/.env/.env. "
+            "For Docker Compose use postgresql://techforest:techforest@db:5432/techforest_db. "
+            "For Dokploy, define DATABASE_URL and DIRECT_URL in the app service environment."
+        )
+    return settings
