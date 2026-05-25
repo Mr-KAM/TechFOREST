@@ -2,9 +2,12 @@
 # =============================================================================
 # TechFOREST - Image de production multi-stage
 # - Stage 1 (frontend-builder) : build statique Vite/React
-# - Stage 2 (backend)          : runtime FastAPI servant l'API + les assets
-# - Migrations Alembic         : executees via une commande dediee (voir
-#                                docker-compose.yml service `migrate`)
+# - Stage 2 (backend)          : runtime FastAPI servant l'API + le frontend
+# - Entrypoint                 : applique les migrations Alembic, active
+#                                l'extension PostGIS et seed les zones /
+#                                comptes par defaut puis lance uvicorn. Le
+#                                conteneur est auto-suffisant : aucun job
+#                                externe requis pour bootstrap la base.
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -24,7 +27,7 @@ RUN npm run build
 
 
 # -----------------------------------------------------------------------------
-# Stage 2 : Runtime backend FastAPI (sert aussi /assets statiques)
+# Stage 2 : Runtime backend FastAPI (sert aussi le bundle frontend statique)
 # -----------------------------------------------------------------------------
 FROM python:3.12-slim AS backend
 
@@ -60,6 +63,12 @@ COPY Backend/alembic ./alembic
 COPY Backend/alembic.ini ./alembic.ini
 COPY Backend/data ./data
 
+# Entrypoint qui orchestre migrations + PostGIS + seed + uvicorn.
+# Conversion CRLF -> LF defensive (build depuis Windows) puis chmod +x.
+COPY Backend/docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh \
+    && chmod +x /app/docker-entrypoint.sh
+
 # Frontend deja build, depose dans un repertoire statique servi par FastAPI
 COPY --from=frontend-builder /frontend/dist ./static
 
@@ -71,9 +80,17 @@ USER app
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD curl --fail --silent --show-error http://127.0.0.1:8000/health || exit 1
 
-# Pas de migration ici : on lance UNIQUEMENT l'API. Les migrations sont
-# executees par un job dedie (voir docker-compose.yml).
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips=*"]
+# Au demarrage du conteneur (cf. Backend/docker-entrypoint.sh) :
+#   1. alembic upgrade head                  -> migrations DB
+#   2. python -m app.scripts.load_geodata    -> CREATE EXTENSION postgis + seed
+#   3. exec uvicorn ...                      -> demarrage API + front statique
+# load_geodata est idempotent : il ignore les objets deja existants.
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["uvicorn", "app.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--proxy-headers", \
+     "--forwarded-allow-ips=*"]

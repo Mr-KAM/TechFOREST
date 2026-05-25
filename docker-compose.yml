@@ -1,10 +1,16 @@
 # =============================================================================
 # TechFOREST - docker-compose
 # Services :
-#   - db        : PostgreSQL + PostGIS
-#   - migrate   : Job one-shot `alembic upgrade head` (separe du runtime app)
-#   - app       : API FastAPI (image multi-stage, non-root, healthcheck)
-# Le frontend React est build dans l'image et servi en statique par l'API.
+#   - db   : PostgreSQL 16 + PostGIS 3.4 (image officielle postgis/postgis)
+#   - app  : API FastAPI + bundle frontend statique (image multi-stage).
+#            L'entrypoint applique automatiquement les migrations Alembic,
+#            active l'extension PostGIS et seed les zones / comptes par
+#            defaut avant de demarrer uvicorn. Aucun job externe requis.
+#
+# Demarrage :
+#   1. cp .env.example .env   (puis remplir DB_PASSWORD et SECRET_KEY)
+#   2. docker compose up --build
+#   3. Front + API disponibles sur http://localhost:${APP_PORT:-8000}
 # =============================================================================
 
 services:
@@ -14,7 +20,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-techforest}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required (cf. .env)}
       POSTGRES_DB: ${DB_NAME:-techforest_db}
     # Port non expose par defaut. Decommenter uniquement en local pour
     # se connecter avec un client externe (psql, DBeaver, ...).
@@ -22,7 +28,6 @@ services:
     #   - "5432:5432"
     volumes:
       - techforest_db_data:/var/lib/postgresql/data
-      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-techforest} -d ${DB_NAME:-techforest_db}"]
       interval: 5s
@@ -30,28 +35,8 @@ services:
       retries: 10
 
   # ---------------------------------------------------------------------------
-  # Job one-shot : applique les migrations Alembic puis se termine (exit 0).
-  # L'app NE demarre que si ce job a reussi (depends_on.service_completed_successfully).
-  # ---------------------------------------------------------------------------
-  migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: techforest-app:latest
-    container_name: techforest-migrate
-    depends_on:
-      db:
-        condition: service_healthy
-    env_file:
-      - Backend/.env
-    environment:
-      DATABASE_URL: postgresql://${DB_USER:-techforest}:${DB_PASSWORD}@db:5432/${DB_NAME:-techforest_db}
-      DIRECT_URL: postgresql://${DB_USER:-techforest}:${DB_PASSWORD}@db:5432/${DB_NAME:-techforest_db}
-    restart: "no"
-    command: ["alembic", "upgrade", "head"]
-
-  # ---------------------------------------------------------------------------
   # API FastAPI (sert aussi le bundle Vite/React build via /static).
+  # L'entrypoint orchestre : alembic upgrade head -> load_geodata -> uvicorn.
   # ---------------------------------------------------------------------------
   app:
     build:
@@ -63,25 +48,35 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     env_file:
-      - Backend/.env
+      # Optionnel : variables additionnelles (KOBO, GEE, comptes bootstrap...).
+      # Les variables critiques (DATABASE_URL, SECRET_KEY) sont fournies ci-
+      # dessous via `environment` et ont priorite sur ce fichier.
+      - path: ./Backend/.env
+        required: false
     environment:
       DATABASE_URL: postgresql://${DB_USER:-techforest}:${DB_PASSWORD}@db:5432/${DB_NAME:-techforest_db}
       DIRECT_URL: postgresql://${DB_USER:-techforest}:${DB_PASSWORD}@db:5432/${DB_NAME:-techforest_db}
+      DB_USE_NULL_POOL: "false"
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required (cf. .env)}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8000,http://localhost:5173}
+      DEBUG: ${DEBUG:-false}
+      # Compte super-admin cree au premier boot si les deux variables sont
+      # remplies (idempotent : ignore si l'email existe deja).
+      DEFAULT_SUPERADMIN_EMAIL: ${DEFAULT_SUPERADMIN_EMAIL:-}
+      DEFAULT_SUPERADMIN_PASSWORD: ${DEFAULT_SUPERADMIN_PASSWORD:-}
     ports:
-      - "8000:8000"
+      - "${APP_PORT:-8000}:8000"
     volumes:
-      # Credentials GEE jamais embarques dans l'image, montes en lecture seule.
-      # Le chemin source doit exister localement (ou etre fourni par Dokploy via
-      # un secret/file mount).
+      # Credentials GEE jamais embarques dans l'image. Monte en lecture seule
+      # si le fichier existe localement (sinon commenter cette ligne ou
+      # injecter via secret manager).
       - ./Backend/service-account-key-gee-true.json:/app/service-account-key-gee-true.json:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
       interval: 30s
       timeout: 5s
-      start_period: 15s
+      start_period: 30s
       retries: 3
 
 volumes:

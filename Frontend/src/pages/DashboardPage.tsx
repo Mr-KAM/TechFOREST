@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactElement } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap, CircleMarker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -259,6 +259,22 @@ function LegendSidebar({
 }) {
   const [open, setOpen] = useState(true);
   const legend = LAYER_LEGENDS[layerType];
+  const opacityPanel: ReactElement | null = (geeResult !== null && showGeeLayer) ? (
+    <div>
+      <label className="text-xs font-medium text-muted-foreground">
+        Opacité : {Math.round(geeOpacity * 100)}%
+      </label>
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.05}
+        value={geeOpacity}
+        onChange={(e) => onOpacityChange(Number(e.target.value))}
+        className="mt-1 w-full accent-primary"
+      />
+    </div>
+  ) : null;
 
   return (
     <div
@@ -364,22 +380,7 @@ function LegendSidebar({
           </div>
 
           {/* ── Opacité GEE ── */}
-          {geeResult && showGeeLayer && (
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">
-                Opacité : {Math.round(geeOpacity * 100)}%
-              </label>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={geeOpacity}
-                onChange={(e) => onOpacityChange(Number(e.target.value))}
-                className="mt-1 w-full accent-primary"
-              />
-            </div>
-          )}
+          {opacityPanel}
 
           {/* ── Légende ── */}
           {legend && geeResult && (

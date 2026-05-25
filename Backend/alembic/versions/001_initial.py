@@ -16,8 +16,21 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # PostGIS
-    op.execute("CREATE EXTENSION IF NOT EXISTS postgis")
+    # PostGIS – l'extension doit être installée sur le serveur PostgreSQL.
+    # Si vous utilisez Supabase : activez-la depuis Database → Extensions.
+    # Si vous utilisez votre propre Postgres : utilisez l'image postgis/postgis
+    # ou installez postgresql-XX-postgis-3 sur le serveur.
+    from sqlalchemy.exc import NotSupportedError
+    try:
+        op.execute("CREATE EXTENSION IF NOT EXISTS postgis")
+    except NotSupportedError as e:
+        raise SystemExit(
+            "\n[ERREUR] PostGIS n'est pas installé sur ce serveur PostgreSQL.\n"
+            "  → Supabase : activez PostGIS dans Database → Extensions.\n"
+            "  → Docker   : utilisez l'image postgis/postgis:16-3.4.\n"
+            "  → Bare-metal : apt-get install postgresql-XX-postgis-3\n"
+            f"  Détail : {e}"
+        ) from e
 
     # Users
     op.create_table(

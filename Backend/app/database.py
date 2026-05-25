@@ -44,8 +44,18 @@ class Base(DeclarativeBase):
 
 def ensure_postgis(connection):
     """Active l'extension PostGIS si elle n'existe pas."""
-    connection.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
-    connection.commit()
+    from sqlalchemy.exc import NotSupportedError
+    try:
+        connection.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
+        connection.commit()
+    except NotSupportedError as e:
+        raise SystemExit(
+            "\n[ERREUR] PostGIS n'est pas installé sur ce serveur PostgreSQL.\n"
+            "  → Supabase : activez PostGIS dans Database → Extensions.\n"
+            "  → Docker   : utilisez l'image postgis/postgis:16-3.4.\n"
+            "  → Bare-metal : apt-get install postgresql-XX-postgis-3\n"
+            f"  Détail : {e}"
+        ) from e
 
 
 def init_db():
