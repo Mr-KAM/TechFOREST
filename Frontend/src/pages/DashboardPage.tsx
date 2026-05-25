@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap, CircleMarker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -259,7 +259,7 @@ function LegendSidebar({
 }) {
   const [open, setOpen] = useState(true);
   const legend = LAYER_LEGENDS[layerType];
-  const opacityPanel: ReactElement | null = (geeResult !== null && showGeeLayer) ? (
+  const opacityPanel: ReactNode = (geeResult !== null && showGeeLayer) ? (
     <div>
       <label className="text-xs font-medium text-muted-foreground">
         Opacité : {Math.round(geeOpacity * 100)}%

@@ -1,5 +1,5 @@
 # =============================================================================
-# TechFOREST - docker-compose
+# TechFOREST - docker-compose (production)
 # Services :
 #   - db   : PostgreSQL 16 + PostGIS 3.4 (image officielle postgis/postgis)
 #   - app  : API FastAPI + bundle frontend statique (image multi-stage).
@@ -9,7 +9,7 @@
 #
 # Demarrage :
 #   1. cp .env.example .env   (puis remplir DB_PASSWORD et SECRET_KEY)
-#   2. docker compose up --build
+#   2. docker compose up --build -d
 #   3. Front + API disponibles sur http://localhost:${APP_PORT:-8000}
 # =============================================================================
 
@@ -22,17 +22,41 @@ services:
       POSTGRES_USER: ${DB_USER:-techforest}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required (cf. .env)}
       POSTGRES_DB: ${DB_NAME:-techforest_db}
-    # Port non expose par defaut. Decommenter uniquement en local pour
-    # se connecter avec un client externe (psql, DBeaver, ...).
+    # Tuning Postgres pour un petit VPS (1-2 GB RAM). Adapter shared_buffers
+    # a ~25% de la RAM disponible et effective_cache_size a ~75%.
+    command: >
+      postgres
+      -c max_connections=100
+      -c shared_buffers=256MB
+      -c effective_cache_size=768MB
+      -c maintenance_work_mem=64MB
+      -c work_mem=4MB
+      -c wal_buffers=16MB
+      -c synchronous_commit=off
+      -c log_min_duration_statement=500
+    # Port NON expose en production. Decommenter uniquement pour debug local.
     # ports:
-    #   - "5432:5432"
+    #   - "127.0.0.1:5432:5432"
     volumes:
       - techforest_db_data:/var/lib/postgresql/data
+    networks:
+      - techforest_net
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-techforest} -d ${DB_NAME:-techforest_db}"]
       interval: 5s
       timeout: 5s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 512m
 
   # ---------------------------------------------------------------------------
   # API FastAPI (sert aussi le bundle Vite/React build via /static).
@@ -59,25 +83,52 @@ services:
       DIRECT_URL: postgresql://${DB_USER:-techforest}:${DB_PASSWORD}@db:5432/${DB_NAME:-techforest_db}
       DB_USE_NULL_POOL: "false"
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required (cf. .env)}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8000,http://localhost:5173}
-      DEBUG: ${DEBUG:-false}
-      # Compte super-admin cree au premier boot si les deux variables sont
-      # remplies (idempotent : ignore si l'email existe deja).
+      # En production, lister uniquement les domaines reels (ex: https://mondomaine.com)
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8000}
+      DEBUG: "false"
+      # Nombre de workers uvicorn. Regle : 2 * nb_CPU + 1. Defaut = 2.
+      UVICORN_WORKERS: "${UVICORN_WORKERS:-2}"
+      # Compte super-admin cree au premier boot (idempotent)
       DEFAULT_SUPERADMIN_EMAIL: ${DEFAULT_SUPERADMIN_EMAIL:-}
       DEFAULT_SUPERADMIN_PASSWORD: ${DEFAULT_SUPERADMIN_PASSWORD:-}
     ports:
       - "${APP_PORT:-8000}:8000"
     volumes:
-      # Credentials GEE jamais embarques dans l'image. Monte en lecture seule
-      # si le fichier existe localement (sinon commenter cette ligne ou
-      # injecter via secret manager).
+      # Credentials GEE. Montes en lecture seule depuis le host.
+      # Si GEE n'est pas utilise, creer un fichier vide :
+      #   echo '{}' > Backend/service-account-key-gee-true.json
+      # Pour la production distante, privilegier un secret manager ou un
+      # inject de fichier via Dokploy / vault / variable d'env.
       - ./Backend/service-account-key-gee-true.json:/app/service-account-key-gee-true.json:ro
+    # /tmp en tmpfs : evite les ecritures sur le FS overlay (performances + securite)
+    tmpfs:
+      - /tmp:mode=1777,size=64m
+    networks:
+      - techforest_net
+    security_opt:
+      - no-new-privileges:true
+    # Laisse 30 s aux workers uvicorn pour terminer les requetes en cours
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
       interval: 30s
       timeout: 5s
-      start_period: 30s
+      start_period: 60s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 768m
+          cpus: "1.0"
+
+networks:
+  techforest_net:
+    driver: bridge
 
 volumes:
   techforest_db_data:
