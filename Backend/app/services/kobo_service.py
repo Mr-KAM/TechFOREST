@@ -3,6 +3,7 @@
 import logging
 from datetime import datetime
 from functools import lru_cache
+from urllib.parse import quote
 
 import pykobo
 import requests
@@ -1697,6 +1698,18 @@ def _resolve_photo_url(filename: str | None, index: dict[str, str]) -> str | Non
     return index.get(basename)
 
 
+def _proxify_kobo_url(url: str | None) -> str | None:
+    """Transforme une URL Kobo en URL proxy backend (servie avec le bon token côté serveur).
+
+    Les pièces jointes Kobo nécessitent un en-tête Authorization que les
+    balises <img> ne peuvent pas envoyer. Le frontend appellera donc le proxy
+    `/api/media/kobo-attachment` (en ajoutant `?token=` côté client).
+    """
+    if not url:
+        return None
+    return f"/api/media/kobo-attachment?url={quote(url, safe='')}"
+
+
 def _fallback_image_url(submission: dict, index: dict[str, str]) -> str | None:
     """Retourne une photo générique non-signature pour la soumission."""
     # 1) Photo d'équipe top-level si présente
@@ -1740,7 +1753,7 @@ def extract_locations(form_key: str | None, submissions: list[dict]) -> list[dic
                 **pt,
                 "submission_id": sub_id,
                 "submitted_at": submitted_at,
-                "image_url": image_url,
+                "image_url": _proxify_kobo_url(image_url),
             })
     return points
 

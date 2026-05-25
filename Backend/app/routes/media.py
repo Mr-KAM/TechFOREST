@@ -3,9 +3,12 @@
 import os
 import shutil
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+import requests
+from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse, StreamingResponse
+from jose import JWTError, jwt
 
 from app.config import get_settings
 from app.security import require_superadmin
@@ -170,4 +173,96 @@ def delete_video(video_key: str):
     if os.path.isfile(filepath):
         os.remove(filepath)
     return _video_meta(video_key, filename)
+
+
+# ─── Proxy d'images KoboToolbox ────────────────────────────────
+# Les URLs `download_url` des pièces jointes Kobo nécessitent l'en-tête
+# `Authorization: Token <KOBO_API_TOKEN>` pour être servies. Comme une balise
+# `<img>` ne peut pas envoyer d'en-tête personnalisé, ce proxy les sert avec
+# le bon token côté serveur. L'accès est protégé par un JWT applicatif
+# (passé via `?token=` car les `<img>` n'ajoutent pas l'en-tête Authorization).
+
+
+def _allowed_kobo_hosts() -> set[str]:
+    """Liste blanche des hôtes Kobo autorisés (kf.* et kc.* dérivés de URL_KOBO)."""
+    hosts: set[str] = set()
+    base = urlparse(settings.URL_KOBO).hostname
+    if base:
+        hosts.add(base)
+        # KoboToolbox utilise généralement kf.* (UI/API) et kc.* (collecte/médias).
+        if base.startswith("kf."):
+            hosts.add("kc." + base[3:])
+        elif base.startswith("kc."):
+            hosts.add("kf." + base[3:])
+        else:
+            hosts.add("kc." + base)
+            hosts.add("kf." + base)
+    return hosts
+
+
+def _verify_app_token(raw_token: str) -> None:
+    try:
+        jwt.decode(raw_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except JWTError as exc:
+        raise HTTPException(status_code=401, detail="Token invalide") from exc
+
+
+@router.get("/kobo-attachment")
+def proxy_kobo_attachment(
+    url: str = Query(..., description="URL Kobo originale (download_url)"),
+    token: str | None = Query(None, description="JWT applicatif (utilisé par <img>)"),
+    authorization: str | None = Header(None),
+):
+    """Proxy authentifié pour récupérer une pièce jointe image KoboToolbox."""
+    # 1) Authentification applicative (header ou query)
+    raw_token: str | None = None
+    if authorization and authorization.lower().startswith("bearer "):
+        raw_token = authorization.split(" ", 1)[1].strip()
+    elif token:
+        raw_token = token
+    if not raw_token:
+        raise HTTPException(status_code=401, detail="Authentification requise")
+    _verify_app_token(raw_token)
+
+    # 2) Validation de l'hôte cible
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        raise HTTPException(status_code=400, detail="URL invalide")
+    allowed = _allowed_kobo_hosts()
+    if allowed and parsed.hostname not in allowed:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Hôte non autorisé : {parsed.hostname}",
+        )
+
+    # 3) Récupération avec le token Kobo
+    kobo_token = settings.KOBO_API_TOKEN
+    headers = {"Authorization": f"Token {kobo_token}"} if kobo_token else {}
+    try:
+        upstream = requests.get(url, headers=headers, stream=True, timeout=30, allow_redirects=True)
+    except requests.RequestException as exc:
+        raise HTTPException(status_code=502, detail=f"Erreur amont Kobo : {exc}") from exc
+
+    if upstream.status_code >= 400:
+        upstream.close()
+        raise HTTPException(
+            status_code=upstream.status_code,
+            detail=f"Kobo a renvoyé {upstream.status_code}",
+        )
+
+    content_type = upstream.headers.get("content-type", "application/octet-stream")
+    content_length = upstream.headers.get("content-length")
+    response_headers = {"Cache-Control": "private, max-age=3600"}
+    if content_length:
+        response_headers["Content-Length"] = content_length
+
+    def _iter():
+        try:
+            for chunk in upstream.iter_content(chunk_size=64 * 1024):
+                if chunk:
+                    yield chunk
+        finally:
+            upstream.close()
+
+    return StreamingResponse(_iter(), media_type=content_type, headers=response_headers)
 

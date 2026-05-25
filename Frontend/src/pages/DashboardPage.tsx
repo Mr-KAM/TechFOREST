@@ -6,6 +6,7 @@ import {
   getZones,
   clipGEE,
   getLocations,
+  withAuthQuery,
   type ForestZone,
   type GEEClipResponse,
   type SubmissionLocation,
@@ -843,16 +844,19 @@ export default function DashboardPage() {
                           {new Date(loc.submitted_at).toLocaleString("fr-FR")}
                         </div>
                       )}
-                      {loc.image_url && (
-                        <a href={loc.image_url} target="_blank" rel="noreferrer">
-                          <img
-                            src={loc.image_url}
-                            alt="Observation"
-                            style={{ marginTop: 6, width: 180, maxHeight: 140, objectFit: "cover", borderRadius: 4, display: "block" }}
-                            loading="lazy"
-                          />
-                        </a>
-                      )}
+                      {loc.image_url && (() => {
+                        const authedUrl = withAuthQuery(loc.image_url);
+                        return (
+                          <a href={authedUrl} target="_blank" rel="noreferrer">
+                            <img
+                              src={authedUrl}
+                              alt="Observation"
+                              style={{ marginTop: 6, width: 180, maxHeight: 140, objectFit: "cover", borderRadius: 4, display: "block" }}
+                              loading="lazy"
+                            />
+                          </a>
+                        );
+                      })()}
                     </div>
                   </Popup>
                 </CircleMarker>

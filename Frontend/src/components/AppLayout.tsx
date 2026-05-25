@@ -128,12 +128,19 @@ export default function AppLayout() {
           )}
         >
           {/* Brand */}
-          <div className={cn("flex h-14 items-center gap-2 px-4 shrink-0", collapsed && "justify-center px-2")}>
+          <Link
+            to="/"
+            className={cn(
+              "flex h-14 items-center gap-2 px-4 shrink-0 transition-colors hover:bg-sidebar-accent/50",
+              collapsed && "justify-center px-2"
+            )}
+            title="Retour a l'accueil"
+          >
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20">
               <TreePine className="h-5 w-5 text-primary" />
             </div>
             {!collapsed && <span className="font-bold text-base tracking-tight">TechFOREST</span>}
-          </div>
+          </Link>
 
           <Separator className="bg-sidebar-border" />
 
@@ -223,12 +230,16 @@ export default function AppLayout() {
           {/* Top bar */}
           <header className="flex h-14 items-center gap-3 border-b bg-background/80 backdrop-blur-sm px-4 shrink-0">
             {/* Brand mobile / tablette */}
-            <div className="flex items-center gap-2 lg:hidden">
+            <Link
+              to="/"
+              className="flex items-center gap-2 lg:hidden hover:opacity-80 transition-opacity"
+              title="Retour a l'accueil"
+            >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20">
                 <TreePine className="h-4 w-4 text-primary" />
               </div>
               <span className="font-bold text-sm tracking-tight">TechFOREST</span>
-            </div>
+            </Link>
 
             {/* Desktop collapse toggle */}
             <Button
@@ -242,7 +253,9 @@ export default function AppLayout() {
 
             {/* Breadcrumb */}
             <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
-              <span>TechFOREST</span>
+              <Link to="/" className="hover:text-foreground transition-colors" title="Retour a l'accueil">
+                TechFOREST
+              </Link>
               {activeNav && (
                 <>
                   <ChevronRight className="h-3.5 w-3.5" />

@@ -1,5 +1,18 @@
 const API_BASE = "/api";
 
+/**
+ * Ajoute le JWT en query string à une URL servie par notre backend
+ * (utile pour les balises <img> qui ne peuvent pas envoyer d'en-tête
+ * Authorization, ex. proxy des pièces jointes Kobo).
+ */
+export function withAuthQuery(url: string | null | undefined): string {
+  if (!url) return "";
+  const token = localStorage.getItem("token");
+  if (!token) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}token=${encodeURIComponent(token)}`;
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem("token");
   const headers: Record<string, string> = {

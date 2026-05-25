@@ -14,6 +14,7 @@ import {
   getPlantingBreakdowns,
   getFauneBreakdowns,
   getMenacesBreakdowns,
+  withAuthQuery,
   type SubmissionLocation,
   type TimelineEntry,
   type KoboFormConfigured,
@@ -539,21 +540,24 @@ function FauneObservationsMap() {
                           </>
                         )}
                       </div>
-                      {loc.image_url && (
-                        <a
-                          href={loc.image_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="block mt-1"
-                        >
-                          <img
-                            src={loc.image_url}
-                            alt="Observation"
-                            className="w-full h-24 object-cover rounded-md border border-border"
-                            loading="lazy"
-                          />
-                        </a>
-                      )}
+                      {loc.image_url && (() => {
+                        const authedUrl = withAuthQuery(loc.image_url);
+                        return (
+                          <a
+                            href={authedUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block mt-1"
+                          >
+                            <img
+                              src={authedUrl}
+                              alt="Observation"
+                              className="w-full h-24 object-cover rounded-md border border-border"
+                              loading="lazy"
+                            />
+                          </a>
+                        );
+                      })()}
                     </div>
                   </Popup>
                 </CircleMarker>
@@ -1547,21 +1551,24 @@ function ReboisementObservationsMap({ forestLabel }: { forestLabel: string | nul
                           </>
                         )}
                       </div>
-                      {loc.image_url && (
-                        <a
-                          href={loc.image_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="block mt-1"
-                        >
-                          <img
-                            src={loc.image_url}
-                            alt="Arbre reboisé"
-                            className="w-full h-24 object-cover rounded-md border border-border"
-                            loading="lazy"
-                          />
-                        </a>
-                      )}
+                      {loc.image_url && (() => {
+                        const authedUrl = withAuthQuery(loc.image_url);
+                        return (
+                          <a
+                            href={authedUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block mt-1"
+                          >
+                            <img
+                              src={authedUrl}
+                              alt="Arbre reboisé"
+                              className="w-full h-24 object-cover rounded-md border border-border"
+                              loading="lazy"
+                            />
+                          </a>
+                        );
+                      })()}
                     </div>
                   </Popup>
                 </CircleMarker>
