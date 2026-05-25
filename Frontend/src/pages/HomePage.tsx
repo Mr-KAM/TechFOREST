@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/useTheme";
-import { getZones, getPublicSummary } from "@/lib/api";
+import { getZones, getPublicSummary, listVideos, type MediaVideo } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +56,16 @@ export default function HomePage() {
   const { resolved, setTheme } = useTheme();
   const [totalArea, setTotalArea] = useState<number | null>(null);
   const [treesPlanted, setTreesPlanted] = useState<number | null>(null);
+  const [videos, setVideos] = useState<Record<string, MediaVideo>>({});
+
+  // Construit une URL avec cache-buster basé sur la date de mise à jour
+  // de la vidéo, pour forcer le navigateur à recharger après un upload.
+  const videoUrl = (key: string, fallback: string) => {
+    const v = videos[key];
+    if (!v) return fallback;
+    const stamp = v.updated_at ? Date.parse(v.updated_at) : Date.now();
+    return `${v.url}?v=${stamp}`;
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +94,18 @@ export default function HomePage() {
 
     loadZones();
     loadSummary();
+
+    // Charge les métadonnées des vidéos (avec updated_at pour le cache-buster)
+    listVideos()
+      .then((list) => {
+        if (cancelled) return;
+        const map: Record<string, MediaVideo> = {};
+        for (const v of list) map[v.key] = v;
+        setVideos(map);
+      })
+      .catch(() => {
+        /* fallback : on garde les URL par défaut */
+      });
 
     // Rafraîchit le compteur "Arbres reboisés" toutes les 60 secondes
     const interval = window.setInterval(loadSummary, 60_000);
@@ -154,13 +176,14 @@ export default function HomePage() {
       <section className="relative flex min-h-[85vh] items-center justify-center overflow-hidden pt-28 sm:pt-20 md:pt-14">
         {/* Video background */}
         <video
+          key={videoUrl("drone", "/api/media/videos/drone")}
           autoPlay
           muted
           loop
           playsInline
           className="absolute inset-0 h-full w-full object-cover"
         >
-          <source src="/api/media/videos/drone" type="video/mp4" />
+          <source src={videoUrl("drone", "/api/media/videos/drone")} type="video/mp4" />
         </video>
 
         {/* Overlay */}
@@ -285,8 +308,16 @@ export default function HomePage() {
             Découvrez TechFOREST en action — survol par drone et démonstration de la plateforme.
           </p>
           <div className="relative mt-10 overflow-hidden rounded-2xl border bg-card shadow-xl">
-            <video controls className="w-full" poster="/api/media/videos/drone">
-              <source src="/api/media/videos/presentation" type="video/mp4" />
+            <video
+              key={videoUrl("presentation", "/api/media/videos/presentation")}
+              controls
+              className="w-full"
+              poster={videoUrl("drone", "/api/media/videos/drone")}
+            >
+              <source
+                src={videoUrl("presentation", "/api/media/videos/presentation")}
+                type="video/mp4"
+              />
               Votre navigateur ne supporte pas la lecture vidéo.
             </video>
             {/* Play overlay for visual appeal */}

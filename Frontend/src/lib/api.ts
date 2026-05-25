@@ -67,6 +67,8 @@ export interface AdminUserCreate {
   full_name: string;
   password: string;
   role: string;
+  /** Si true, le backend envoie au nouvel utilisateur ses identifiants par email (si SMTP configuré). */
+  send_email?: boolean;
 }
 
 export interface AdminUserUpdate {
@@ -748,6 +750,88 @@ export function getPublicSummary(): Promise<PublicSummary> {
     if (!res.ok) throw new Error("public summary unavailable");
     return res.json();
   });
+}
+
+// ─── Médias (vidéos page d'accueil) ─────────────────────────────────────────
+
+export interface MediaVideo {
+  key: string;
+  filename: string;
+  url: string;
+  available: boolean;
+  size_bytes: number;
+  updated_at: string | null;
+}
+
+/** Liste les vidéos disponibles (public). */
+export function listVideos(): Promise<MediaVideo[]> {
+  return fetch(`${API_BASE}/media/videos`).then((res) => {
+    if (!res.ok) throw new Error("Impossible de lister les vidéos");
+    return res.json();
+  });
+}
+
+/** Téléverse une nouvelle vidéo (superadmin uniquement). */
+export async function uploadVideo(videoKey: string, file: File): Promise<MediaVideo> {
+  const token = localStorage.getItem("token");
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_BASE}/media/videos/${videoKey}/upload`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(body.detail || `Erreur ${res.status}`);
+  }
+  return res.json();
+}
+
+/** Supprime une vidéo existante (superadmin uniquement). */
+export function deleteVideo(videoKey: string): Promise<MediaVideo> {
+  return request<MediaVideo>(`/media/videos/${videoKey}`, { method: "DELETE" });
+}
+
+// ─── Export Excel des soumissions Kobo ─────────────────────────────────────
+
+/**
+ * Télécharge le fichier .xlsx d'un formulaire et déclenche son enregistrement
+ * dans le navigateur. Retourne le nom de fichier réellement utilisé.
+ */
+export async function downloadFormXlsx(
+  formUid: string,
+  options: { showAll?: boolean; filename?: string } = {},
+): Promise<string> {
+  const token = localStorage.getItem("token");
+  const qs = options.showAll ? "?show_all=true" : "";
+  const res = await fetch(
+    `${API_BASE}/kpi/forms/${encodeURIComponent(formUid)}/export.xlsx${qs}`,
+    { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+  );
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(body.detail || `Erreur ${res.status}`);
+  }
+
+  // Récupère le nom proposé par le serveur, sinon repli sur l'option fournie
+  let filename = options.filename || `${formUid}.xlsx`;
+  const disposition = res.headers.get("Content-Disposition") || "";
+  const match = /filename\*?=(?:UTF-8''|")?([^";]+)/i.exec(disposition);
+  if (match && match[1]) {
+    filename = decodeURIComponent(match[1].replace(/"$/, ""));
+  }
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  return filename;
 }
 
 export interface SubmissionLocation {

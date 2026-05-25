@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.database import get_db
 from app.limiter import limiter
 from app.models.user import User
@@ -17,6 +18,15 @@ from app.security import (
     require_superadmin,
     verify_password,
 )
+from app.services.email_service import (
+    EmailNotConfiguredError,
+    EmailSendError,
+    send_credentials_email,
+)
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["Authentification"])
 
@@ -111,10 +121,17 @@ def list_users(
 @router.post("/users", response_model=UserRead, status_code=201)
 def create_user(
     payload: UserCreate,
+    request: Request,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin_or_above),
 ):
-    """Crée un utilisateur. Un admin ne peut créer que des viewer ou admin."""
+    """Crée un utilisateur. Un admin ne peut créer que des viewer ou admin.
+
+    Si ``payload.send_email`` vaut ``True`` et que le service SMTP est
+    configuré (variable ``SMTP_HOST``), un email contenant les identifiants
+    de connexion est envoyé en tâche de fond au nouvel utilisateur.
+    """
     if db.query(User).filter(User.email == payload.email).first():
         raise HTTPException(status_code=400, detail="Email déjà utilisé")
     # Un simple admin ne peut pas créer de superadmin
@@ -132,6 +149,40 @@ def create_user(
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    if payload.send_email:
+        settings = get_settings()
+        if not settings.smtp_enabled:
+            # On ne fait pas échouer la création : le compte existe déjà.
+            # On informe simplement via les logs ; le frontend affichera le
+            # statut de l'utilisateur créé.
+            logger.warning(
+                "send_email=true ignoré pour %s : SMTP non configuré.",
+                payload.email,
+            )
+        else:
+            login_url = (
+                settings.APP_PUBLIC_URL.strip()
+                or request.headers.get("origin", "").strip()
+                or "/"
+            )
+            # Capture les valeurs avant la sortie de la requête : le
+            # mot de passe en clair n'est disponible que dans ``payload``.
+            email = payload.email
+            full_name = payload.full_name
+            password = payload.password
+
+            def _send() -> None:
+                try:
+                    send_credentials_email(email, full_name, password, login_url)
+                    logger.info("Email d'identifiants envoyé à %s", email)
+                except (EmailNotConfiguredError, EmailSendError) as exc:
+                    logger.warning(
+                        "Echec envoi identifiants à %s : %s", email, exc
+                    )
+
+            background_tasks.add_task(_send)
+
     return user
 
 

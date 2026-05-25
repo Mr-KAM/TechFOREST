@@ -1,6 +1,10 @@
 import asyncio
+import json
+import re
+from io import BytesIO
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 
 from app.concurrency import run_sync
 
@@ -553,4 +557,203 @@ async def get_kpi_dashboard(
         form_name=metadata.get("name", ""),
         total_submissions=len(submissions),
         indicators=indicators,
+    )
+
+
+# ─── Export Excel (.xlsx) ─────────────────────────────────────────────────
+
+# Champs internes Kobo masqués par défaut dans l'export (mêmes règles que
+# côté frontend afin de produire un fichier compact et lisible).
+_HIDDEN_PREFIXES = ("_", "formhub/", "meta/")
+_HIDDEN_KEYS = {
+    "start", "end", "today", "deviceid", "phonenumber", "username",
+    "simserial", "__version__", "formhub/uuid", "meta/instanceID",
+    "meta/rootUuid", "meta/deprecatedID",
+}
+
+
+def _is_hidden(key: str) -> bool:
+    if key in _HIDDEN_KEYS:
+        return True
+    return any(key.startswith(p) for p in _HIDDEN_PREFIXES)
+
+
+def _flatten(obj, prefix: str = "", out: dict | None = None) -> dict:
+    """Aplati récursivement un dict Kobo (groupes imbriqués -> clés `a/b/c`).
+
+    Les listes (groupes répétés) sont conservées telles quelles afin de
+    pouvoir les détecter et les éclater sur des feuilles dédiées.
+    """
+    if out is None:
+        out = {}
+    if obj is None:
+        return out
+    if not isinstance(obj, dict):
+        if prefix:
+            out[prefix] = obj
+        return out
+    for k, v in obj.items():
+        key = f"{prefix}/{k}" if prefix else k
+        if isinstance(v, list):
+            out[key] = v
+        elif isinstance(v, dict):
+            _flatten(v, key, out)
+        else:
+            out[key] = v
+    return out
+
+
+def _cell_value(v):
+    """Convertit une valeur Kobo en valeur compatible openpyxl."""
+    if v is None:
+        return ""
+    if isinstance(v, list):
+        if not v:
+            return ""
+        if all(not isinstance(x, (dict, list)) for x in v):
+            return ", ".join(str(x) for x in v)
+        return f"{len(v)} élément(s)"
+    if isinstance(v, dict):
+        return json.dumps(v, ensure_ascii=False)
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, (int, float, str)):
+        return v
+    return str(v)
+
+
+def _sanitize_sheet_name(name: str, used: set[str]) -> str:
+    """Excel : 31 caractères max, sans `/\\?*[]:`. Doit être unique."""
+    safe = re.sub(r"[\\/\\?\\*\\[\\]:]", "_", name).strip() or "feuille"
+    safe = safe[:31]
+    base = safe
+    i = 2
+    while safe.lower() in (u.lower() for u in used):
+        suffix = f"_{i}"
+        safe = (base[: 31 - len(suffix)]) + suffix
+        i += 1
+    used.add(safe)
+    return safe
+
+
+def _build_workbook(submissions: list[dict], show_all: bool) -> BytesIO:
+    """Construit un classeur xlsx : 1 feuille principale + N feuilles pour les
+    groupes répétés (un par groupe). Renvoie un BytesIO positionné en 0."""
+    # Import paresseux pour ne pas pénaliser le démarrage de l'app
+    from openpyxl import Workbook
+
+    flat_rows = [_flatten(s) for s in submissions]
+
+    # Détection des groupes répétés (liste contenant au moins un dict)
+    repeated_keys: list[str] = []
+    seen_repeated: set[str] = set()
+    for r in flat_rows:
+        for k, v in r.items():
+            if (
+                k not in seen_repeated
+                and isinstance(v, list)
+                and any(isinstance(x, dict) for x in v)
+            ):
+                seen_repeated.add(k)
+                repeated_keys.append(k)
+
+    # Colonnes feuille principale (toutes clés, ordre d'apparition).
+    main_cols: list[str] = []
+    seen_cols: set[str] = set()
+    for r in flat_rows:
+        for k in r.keys():
+            if k in seen_cols:
+                continue
+            if not show_all and _is_hidden(k):
+                continue
+            seen_cols.add(k)
+            main_cols.append(k)
+
+    wb = Workbook()
+    used_sheet_names: set[str] = set()
+    main = wb.active
+    main.title = _sanitize_sheet_name("Principal", used_sheet_names)
+
+    main.append(main_cols)
+    for r in flat_rows:
+        main.append([_cell_value(r.get(c)) for c in main_cols])
+
+    # Une feuille par groupe répété
+    for gk in repeated_keys:
+        title = _sanitize_sheet_name(gk.split("/")[-1] or gk, used_sheet_names)
+        ws = wb.create_sheet(title)
+
+        group_rows: list[dict] = []
+        for parent_idx, parent_flat in enumerate(flat_rows, start=1):
+            arr = parent_flat.get(gk)
+            if not isinstance(arr, list):
+                continue
+            parent_id = submissions[parent_idx - 1].get("_id", "")
+            for item_idx, item in enumerate(arr, start=1):
+                if not isinstance(item, dict):
+                    continue
+                child = _flatten(item)
+                group_rows.append({
+                    "_parent": parent_idx,
+                    "_parent_id": parent_id,
+                    "_index": item_idx,
+                    **child,
+                })
+
+        meta_cols = ["_parent", "_parent_id", "_index"]
+        gcols = list(meta_cols)
+        seen_g = set(meta_cols)
+        for r in group_rows:
+            for k in r.keys():
+                if k in seen_g:
+                    continue
+                if not show_all and _is_hidden(k):
+                    continue
+                seen_g.add(k)
+                gcols.append(k)
+
+        ws.append(gcols)
+        for r in group_rows:
+            ws.append([_cell_value(r.get(c)) for c in gcols])
+
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf
+
+
+@router.get("/forms/{form_uid}/export.xlsx")
+async def export_form_xlsx(
+    form_uid: str,
+    show_all: bool = Query(
+        default=False,
+        description="Inclure les champs internes Kobo (_id, meta/*, formhub/*...)",
+    ),
+    current_user: User = Depends(get_current_user),
+):
+    """Exporte toutes les soumissions d'un formulaire au format Excel (.xlsx).
+
+    Génère une feuille « Principal » avec les champs simples, plus une
+    feuille par groupe répété détecté (chaque ligne enfant porte les
+    colonnes `_parent`, `_parent_id`, `_index` pour la reliure).
+    """
+    try:
+        resolved = await _resolve_form_uid(form_uid)
+        metadata = await _run_sync(get_form_metadata, resolved)
+        submissions = await _run_sync(get_form_submissions_raw, resolved)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Erreur KoboToolbox : {e}")
+
+    buf = await run_sync(_build_workbook, submissions, show_all)
+
+    form_name = metadata.get("name") or form_uid
+    safe_name = re.sub(r"[^A-Za-z0-9_-]+", "_", form_name).strip("_") or "export"
+    filename = f"{safe_name}.xlsx"
+
+    return StreamingResponse(
+        buf,
+        media_type=(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ),
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

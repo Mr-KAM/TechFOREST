@@ -5,6 +5,7 @@ import { isSuperadmin, useAuth } from "@/lib/auth";
 import {
   getConfiguredKoboForms,
   getKoboSubmissions,
+  downloadFormXlsx,
   type KoboFormConfigured,
 } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable } from "@/components/ui/data-table";
-import { Loader2, Download, RefreshCw, Database } from "lucide-react";
+import { Loader2, Download, RefreshCw, Database, FileSpreadsheet } from "lucide-react";
 
 type Row = Record<string, unknown>;
 
@@ -129,6 +130,7 @@ export default function DataTablePage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [showAllColumns, setShowAllColumns] = useState(false);
+  const [exportingXlsx, setExportingXlsx] = useState(false);
 
   // Charger les formulaires configurés
   useEffect(() => {
@@ -290,6 +292,19 @@ export default function DataTablePage() {
     URL.revokeObjectURL(url);
   };
 
+  const exportXlsx = async () => {
+    if (!selected) return;
+    setExportingXlsx(true);
+    setError(null);
+    try {
+      await downloadFormXlsx(selected, { showAll: showAllColumns });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setExportingXlsx(false);
+    }
+  };
+
   if (!isSuperadmin(user)) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -314,13 +329,14 @@ export default function DataTablePage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Sélection du formulaire</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
+        <CardContent className="space-y-3">
+          {/* Ligne 1 : sélecteur (toujours pleine largeur) */}
           <Select
             value={selected}
             onValueChange={(v) => setSelected(v)}
             disabled={loadingForms || forms.length === 0}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue
                 placeholder={
                   loadingForms ? "Chargement..." : "Choisir un formulaire"
@@ -337,33 +353,52 @@ export default function DataTablePage() {
             </SelectContent>
           </Select>
 
-          <Input
-            placeholder="Rechercher dans la table..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="sm:w-64"
-          />
+          {/* Ligne 2 : recherche + actions, regroupées responsivement */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <Input
+              placeholder="Rechercher dans la table..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full sm:max-w-xs sm:flex-1"
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => loadSubmissions(selected)}
+                disabled={!selected || loadingRows}
+              >
+                {loadingRows ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Rafraîchir</span>
+                <span className="sm:hidden">Recharger</span>
+              </Button>
 
-          <Button
-            variant="outline"
-            onClick={() => loadSubmissions(selected)}
-            disabled={!selected || loadingRows}
-          >
-            {loadingRows ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="mr-2 h-4 w-4" />
-            )}
-            Rafraîchir
-          </Button>
+              <Button
+                variant="outline"
+                onClick={exportCsv}
+                disabled={filteredRows.length === 0}
+              >
+                <Download className="mr-2 h-4 w-4" /> CSV
+              </Button>
 
-          <Button
-            variant="default"
-            onClick={exportCsv}
-            disabled={filteredRows.length === 0}
-          >
-            <Download className="mr-2 h-4 w-4" /> Export CSV
-          </Button>
+              <Button
+                variant="default"
+                onClick={exportXlsx}
+                disabled={!selected || rows.length === 0 || exportingXlsx}
+                title="Export complet : feuille principale + une feuille par groupe répété"
+              >
+                {exportingXlsx ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                )}
+                Excel
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -374,15 +409,16 @@ export default function DataTablePage() {
       )}
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-          <div className="space-y-1">
-            <CardTitle className="text-base">
+        <CardHeader className="flex flex-col gap-3 space-y-0 pb-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1 space-y-1">
+            <CardTitle
+              className="line-clamp-2 break-words text-base"
+              title={currentForm?.name ?? ""}
+            >
               {currentForm?.name ?? "Aucun formulaire"}
             </CardTitle>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Badge variant="secondary">
-                {rows.length} ligne(s)
-              </Badge>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <Badge variant="secondary">{rows.length} ligne(s)</Badge>
               <Badge variant="outline">{principalColumns.length} colonnes</Badge>
               {repeatedGroupKeys.length > 0 && (
                 <Badge variant="outline">
@@ -397,9 +433,12 @@ export default function DataTablePage() {
           <Button
             variant="ghost"
             size="sm"
+            className="shrink-0 self-start sm:self-auto"
             onClick={() => setShowAllColumns((v) => !v)}
           >
-            {showAllColumns ? "Masquer colonnes internes" : "Afficher toutes les colonnes"}
+            {showAllColumns
+              ? "Masquer colonnes internes"
+              : "Afficher toutes les colonnes"}
           </Button>
         </CardHeader>
         <CardContent className="p-3">

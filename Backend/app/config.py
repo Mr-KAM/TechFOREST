@@ -68,6 +68,20 @@ class Settings(BaseSettings):
     DEFAULT_USER_FULLNAME: str = "Utilisateur TechFOREST"
     DEFAULT_USER_ROLE: str = "viewer"
 
+    # SMTP — envoi d'emails (création de compte, notifications). Optionnel :
+    # si SMTP_HOST est vide, les routes qui demandent un envoi renverront
+    # une erreur 503 explicite et n'enregistreront pas d'effet de bord.
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = ""
+    SMTP_FROM_NAME: str = "TechFOREST"
+    SMTP_USE_SSL: bool = False  # True = SMTPS (465), False = STARTTLS si TLS dispo
+    # URL publique de l'application, utilisée dans les emails (ex. lien de
+    # connexion). Si vide, on retombe sur l'origin de la requête HTTP.
+    APP_PUBLIC_URL: str = ""
+
     # Les variables sont deja chargees par load_dotenv() ci-dessus ;
     # pydantic-settings lit simplement os.environ.
     model_config = {"env_file_encoding": "utf-8"}
@@ -75,6 +89,11 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+
+    @property
+    def smtp_enabled(self) -> bool:
+        """Le service SMTP est considéré comme configuré dès qu'un hôte est défini."""
+        return bool(self.SMTP_HOST.strip())
 
     @property
     def kobo_form_uids(self) -> dict[str, str]:

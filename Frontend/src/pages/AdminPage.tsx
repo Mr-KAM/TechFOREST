@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { isSuperadmin, isAdmin, useAuth } from "@/lib/auth";
 import {
@@ -6,8 +6,12 @@ import {
   deleteUser,
   listUsers,
   updateUser,
+  listVideos,
+  uploadVideo,
+  deleteVideo,
   type UserProfile,
   type AdminUserCreate,
+  type MediaVideo,
 } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Trash2, UserPlus } from "lucide-react";
+import { Loader2, Trash2, UserPlus, Video, Upload } from "lucide-react";
 
 const ROLE_OPTIONS_SUPERADMIN = [
   { value: "viewer", label: "Viewer" },
@@ -39,6 +43,7 @@ const EMPTY_FORM: AdminUserCreate = {
   full_name: "",
   password: "",
   role: "viewer",
+  send_email: true,
 };
 
 export default function AdminPage() {
@@ -82,7 +87,11 @@ export default function AdminPage() {
     setInfo(null);
     try {
       const created = await createUser(form);
-      setInfo(`Compte cree : ${created.email}`);
+      setInfo(
+        form.send_email
+          ? `Compte cree : ${created.email}. Les identifiants ont ete envoyes par email (si SMTP configure).`
+          : `Compte cree : ${created.email}`,
+      );
       setForm(EMPTY_FORM);
       await refresh();
     } catch (err) {
@@ -158,53 +167,63 @@ export default function AdminPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form
-            onSubmit={handleCreate}
-            className="grid gap-3 md:grid-cols-5"
-          >
-            <Input
-              placeholder="Email"
-              type="email"
-              required
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-            <Input
-              placeholder="Nom complet"
-              required
-              value={form.full_name}
-              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-            />
-            <Input
-              placeholder="Mot de passe"
-              type="password"
-              required
-              minLength={6}
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-            />
-            <Select
-              value={form.role}
-              onValueChange={(v) => setForm({ ...form, role: v })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Role" />
-              </SelectTrigger>
-              <SelectContent>
-                {roleOptions.map((r) => (
-                  <SelectItem key={r.value} value={r.value}>
-                    {r.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Creer"
-              )}
-            </Button>
+          <form onSubmit={handleCreate} className="space-y-3">
+            <div className="grid gap-3 md:grid-cols-5">
+              <Input
+                placeholder="Email"
+                type="email"
+                required
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+              <Input
+                placeholder="Nom complet"
+                required
+                value={form.full_name}
+                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+              />
+              <Input
+                placeholder="Mot de passe"
+                type="password"
+                required
+                minLength={6}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+              />
+              <Select
+                value={form.role}
+                onValueChange={(v) => setForm({ ...form, role: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roleOptions.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Creer"
+                )}
+              </Button>
+            </div>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-input accent-primary"
+                checked={form.send_email ?? false}
+                onChange={(e) =>
+                  setForm({ ...form, send_email: e.target.checked })
+                }
+              />
+              Envoyer les identifiants par email au nouvel utilisateur
+            </label>
           </form>
         </CardContent>
       </Card>
@@ -298,6 +317,195 @@ export default function AdminPage() {
           )}
         </CardContent>
       </Card>
+
+      {isSuperadminUser && <HomeVideosCard onError={setError} onInfo={setInfo} />}
     </div>
+  );
+}
+
+// ─── Carte de gestion des vidéos de la page d'accueil ─────────────────────
+// Visible uniquement au superadmin.
+function HomeVideosCard({
+  onError,
+  onInfo,
+}: {
+  onError: (msg: string | null) => void;
+  onInfo: (msg: string | null) => void;
+}) {
+  const [videos, setVideos] = useState<MediaVideo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const [progress, setProgress] = useState<Record<string, number>>({});
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const refresh = async () => {
+    setLoading(true);
+    try {
+      setVideos(await listVideos());
+    } catch (err) {
+      onError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  const handleFileSelected = async (key: string, file: File) => {
+    onError(null);
+    onInfo(null);
+    setUploadingKey(key);
+    setProgress((p) => ({ ...p, [key]: 0 }));
+    try {
+      await uploadVideo(key, file);
+      onInfo(`Vidéo « ${key} » mise à jour avec succès.`);
+      await refresh();
+    } catch (err) {
+      onError((err as Error).message);
+    } finally {
+      setUploadingKey(null);
+      setProgress((p) => ({ ...p, [key]: 0 }));
+      const input = fileInputs.current[key];
+      if (input) input.value = "";
+    }
+  };
+
+  const handleDelete = async (key: string) => {
+    if (!confirm(`Supprimer la vidéo « ${key} » ?`)) return;
+    onError(null);
+    onInfo(null);
+    try {
+      await deleteVideo(key);
+      onInfo(`Vidéo « ${key} » supprimée.`);
+      await refresh();
+    } catch (err) {
+      onError((err as Error).message);
+    }
+  };
+
+  const formatSize = (bytes: number) => {
+    if (!bytes) return "—";
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  };
+
+  const formatDate = (iso: string | null) => {
+    if (!iso) return "—";
+    try {
+      return new Date(iso).toLocaleString("fr-FR");
+    } catch {
+      return iso;
+    }
+  };
+
+  const VIDEO_LABELS: Record<string, string> = {
+    drone: "Vidéo de fond (drone — Hero)",
+    presentation: "Vidéo de présentation",
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Video className="h-4 w-4" />
+          Vidéos de la page d'accueil
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Téléversez de nouvelles vidéos pour remplacer celles affichées sur la page d'accueil
+          publique. Formats acceptés : MP4, WebM, MOV, MKV. Taille maximale : 200 Mo.
+        </p>
+
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {videos.map((v) => {
+              const isBusy = uploadingKey === v.key;
+              return (
+                <div
+                  key={v.key}
+                  className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium">{VIDEO_LABELS[v.key] ?? v.key}</span>
+                      {v.available ? (
+                        <Badge variant="outline" className="border-emerald-500/40 text-emerald-600">
+                          Disponible
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-amber-500/40 text-amber-600">
+                          Manquante
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                      <span className="font-mono">{v.filename}</span>
+                      {" · "}
+                      {formatSize(v.size_bytes)}
+                      {" · maj "}
+                      {formatDate(v.updated_at)}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-shrink-0 items-center gap-2">
+                    <input
+                      ref={(el) => {
+                        fileInputs.current[v.key] = el;
+                      }}
+                      type="file"
+                      accept="video/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileSelected(v.key, file);
+                      }}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isBusy}
+                      onClick={() => fileInputs.current[v.key]?.click()}
+                    >
+                      {isBusy ? (
+                        <>
+                          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                          Envoi {progress[v.key] ? `${progress[v.key]}%` : "..."}
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="mr-1.5 h-3.5 w-3.5" />
+                          Remplacer
+                        </>
+                      )}
+                    </Button>
+                    {v.available && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={isBusy}
+                        onClick={() => handleDelete(v.key)}
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {videos.length === 0 && (
+              <p className="text-sm text-muted-foreground">Aucune vidéo configurée.</p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

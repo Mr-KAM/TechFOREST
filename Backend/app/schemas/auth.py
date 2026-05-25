@@ -22,6 +22,10 @@ class UserCreate(BaseModel):
     full_name: str
     password: str
     role: str = ROLE_VIEWER
+    # Si True, le backend tente d'envoyer un email contenant les
+    # identifiants de connexion au nouvel utilisateur (nécessite que les
+    # variables SMTP_* soient configurées).
+    send_email: bool = False
 
     @field_validator("role")
     @classmethod
