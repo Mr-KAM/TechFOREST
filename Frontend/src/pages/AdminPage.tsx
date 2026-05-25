@@ -5,6 +5,7 @@ import {
   createUser,
   deleteUser,
   listUsers,
+  resetUserPassword,
   updateUser,
   listVideos,
   uploadVideo,
@@ -24,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Trash2, UserPlus, Video, Upload } from "lucide-react";
+import { Loader2, Trash2, UserPlus, Video, Upload, KeyRound } from "lucide-react";
 
 const ROLE_OPTIONS_SUPERADMIN = [
   { value: "viewer", label: "Viewer" },
@@ -59,6 +60,7 @@ export default function AdminPage() {
 
   const [form, setForm] = useState<AdminUserCreate>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [resettingId, setResettingId] = useState<number | null>(null);
 
   if (!isAdmin(user)) {
     return <Navigate to="/dashboard" replace />;
@@ -134,6 +136,33 @@ export default function AdminPage() {
       await refresh();
     } catch (err) {
       setError((err as Error).message);
+    }
+  };
+
+  const handleResetPassword = async (u: UserProfile) => {
+    if (
+      !confirm(
+        `Reinitialiser le mot de passe de ${u.email} ?\n\n` +
+          `Un nouveau mot de passe sera genere et envoye par email a l'utilisateur. ` +
+          `L'ancien mot de passe sera invalide.`,
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    setInfo(null);
+    setResettingId(u.id);
+    try {
+      const res = await resetUserPassword(u.id);
+      setInfo(
+        res.email_sent
+          ? `Nouveau mot de passe genere et envoye par email a ${res.email}.`
+          : `Mot de passe reinitialise pour ${res.email} (email non envoye).`,
+      );
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setResettingId(null);
     }
   };
 
@@ -284,19 +313,42 @@ export default function AdminPage() {
                           </Badge>
                         </td>
                         <td className="py-2 pr-3 text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={isSelf || (!isSuperadminUser && u.role === "superadmin")}
-                            onClick={() => handleDelete(u)}
-                            title={
-                              isSelf
-                                ? "Vous ne pouvez pas supprimer votre propre compte"
-                                : "Supprimer"
-                            }
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              disabled={
+                                isSelf ||
+                                resettingId === u.id ||
+                                (!isSuperadminUser && u.role === "superadmin")
+                              }
+                              onClick={() => handleResetPassword(u)}
+                              title={
+                                isSelf
+                                  ? "Utilisez la page Mon profil pour changer votre mot de passe"
+                                  : "Reinitialiser le mot de passe et l'envoyer par email"
+                              }
+                            >
+                              {resettingId === u.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <KeyRound className="h-4 w-4 text-amber-600" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              disabled={isSelf || (!isSuperadminUser && u.role === "superadmin")}
+                              onClick={() => handleDelete(u)}
+                              title={
+                                isSelf
+                                  ? "Vous ne pouvez pas supprimer votre propre compte"
+                                  : "Supprimer"
+                              }
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     );

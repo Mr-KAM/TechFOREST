@@ -7,6 +7,7 @@ import DashboardPage from "@/pages/DashboardPage";
 import KpiPage from "@/pages/KpiPage";
 import AdminPage from "@/pages/AdminPage";
 import DataTablePage from "@/pages/DataTablePage";
+import ProfilePage from "@/pages/ProfilePage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="/kpi" element={<KpiPage />} />
             <Route path="/data" element={<DataTablePage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

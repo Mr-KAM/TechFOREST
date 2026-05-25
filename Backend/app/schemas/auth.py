@@ -61,3 +61,24 @@ class UserUpdate(BaseModel):
                 f"Rôle invalide. Valeurs autorisées : {sorted(ALLOWED_ROLES)}"
             )
         return v
+
+
+class ProfileUpdate(BaseModel):
+    """Mise à jour du profil par l'utilisateur lui-même (PUT /auth/me)."""
+
+    full_name: str | None = None
+    email: EmailStr | None = None
+
+
+class PasswordChange(BaseModel):
+    """Changement de mot de passe par l'utilisateur lui-même."""
+
+    current_password: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def _check_length(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("Le nouveau mot de passe doit contenir au moins 6 caractères.")
+        return v

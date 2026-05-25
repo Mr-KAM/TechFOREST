@@ -60,6 +60,46 @@ export function getMe(): Promise<UserProfile> {
   return request("/auth/me");
 }
 
+// ─── Profil utilisateur ─────────────────────────────────────
+
+export interface ProfileUpdate {
+  full_name?: string;
+  email?: string;
+}
+
+export interface PasswordChange {
+  current_password: string;
+  new_password: string;
+}
+
+export function updateMyProfile(payload: ProfileUpdate): Promise<UserProfile> {
+  return request("/auth/me", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function changeMyPassword(payload: PasswordChange): Promise<void> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE}/auth/me/password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+    throw new Error("Non authentifié");
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(body.detail || `Erreur ${res.status}`);
+  }
+}
+
 // ─── Admin (superadmin uniquement) ──────────────────────────
 
 export interface AdminUserCreate {
@@ -108,6 +148,17 @@ export function deleteUser(userId: number): Promise<void> {
       const body = await res.json().catch(() => ({ detail: res.statusText }));
       throw new Error(body.detail || `Erreur ${res.status}`);
     }
+  });
+}
+
+export interface ResetPasswordResponse {
+  email: string;
+  email_sent: boolean;
+}
+
+export function resetUserPassword(userId: number): Promise<ResetPasswordResponse> {
+  return request(`/auth/users/${userId}/reset-password`, {
+    method: "POST",
   });
 }
 

@@ -6,7 +6,14 @@ from app.config import get_settings
 from app.database import get_db
 from app.limiter import limiter
 from app.models.user import User
-from app.schemas.auth import Token, UserCreate, UserRead, UserUpdate
+from app.schemas.auth import (
+    PasswordChange,
+    ProfileUpdate,
+    Token,
+    UserCreate,
+    UserRead,
+    UserUpdate,
+)
 from app.security import (
     PRIVILEGED_ROLES,
     ROLE_ADMIN,
@@ -22,9 +29,12 @@ from app.services.email_service import (
     EmailNotConfiguredError,
     EmailSendError,
     send_credentials_email,
+    send_password_reset_email,
 )
 
 import logging
+import secrets
+import string
 
 logger = logging.getLogger(__name__)
 
@@ -91,16 +101,49 @@ def me(current_user: User = Depends(get_current_user)):
 
 @router.put("/me", response_model=UserRead)
 def update_me(
-    payload: UserUpdate,
+    payload: ProfileUpdate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Modifier le profil de l'utilisateur connecté."""
+    """Modifier son propre profil (nom complet et/ou email)."""
     if payload.full_name is not None:
-        current_user.full_name = payload.full_name
+        name = payload.full_name.strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="Le nom complet ne peut pas être vide.")
+        current_user.full_name = name
+
+    if payload.email is not None and payload.email != current_user.email:
+        existing = (
+            db.query(User)
+            .filter(User.email == payload.email, User.id != current_user.id)
+            .first()
+        )
+        if existing is not None:
+            raise HTTPException(status_code=400, detail="Email déjà utilisé.")
+        current_user.email = payload.email
+
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+@router.post("/me/password", status_code=204)
+def change_my_password(
+    payload: PasswordChange,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Changer son propre mot de passe (l'ancien mot de passe est requis)."""
+    if not verify_password(payload.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Mot de passe actuel incorrect.")
+    if payload.new_password == payload.current_password:
+        raise HTTPException(
+            status_code=400,
+            detail="Le nouveau mot de passe doit être différent de l'ancien.",
+        )
+    current_user.hashed_password = hash_password(payload.new_password)
+    db.commit()
+    return None
 
 
 # ─── Administration utilisateurs (réservé superadmin) ────────
@@ -235,7 +278,81 @@ def update_user(
     return user
 
 
-@router.delete("/users/{user_id}", status_code=204)
+def _generate_random_password(length: int = 14) -> str:
+    """Génère un mot de passe aléatoire fort (lettres + chiffres + symboles simples)."""
+    alphabet = string.ascii_letters + string.digits + "!@#$%&*?"
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+@router.post("/users/{user_id}/reset-password", status_code=200)
+def reset_user_password(
+    user_id: int,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_above),
+):
+    """Réinitialise le mot de passe d'un utilisateur et lui envoie par email.
+
+    Génère un nouveau mot de passe aléatoire, met à jour le hash en base et
+    envoie un email contenant ce mot de passe provisoire à l'utilisateur.
+
+    Restrictions :
+    - Un admin ne peut pas réinitialiser le mot de passe d'un superadmin.
+    - Un utilisateur ne peut pas utiliser cette route pour son propre compte
+      (il doit passer par /auth/me/password).
+    - Le service SMTP doit être configuré (sinon erreur 503).
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+
+    if user.id == current_user.id:
+        raise HTTPException(
+            status_code=400,
+            detail="Utilisez la page \"Mon profil\" pour changer votre propre mot de passe.",
+        )
+    if current_user.role == ROLE_ADMIN and user.role == ROLE_SUPERADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Un administrateur ne peut pas réinitialiser le mot de passe d'un superadmin.",
+        )
+
+    settings = get_settings()
+    if not settings.smtp_enabled:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Service email non configuré (SMTP_HOST manquant). "
+                "Impossible d'envoyer le nouveau mot de passe."
+            ),
+        )
+
+    new_password = _generate_random_password()
+    user.hashed_password = hash_password(new_password)
+    db.commit()
+    db.refresh(user)
+
+    login_url = (
+        settings.APP_PUBLIC_URL.strip()
+        or request.headers.get("origin", "").strip()
+        or "/"
+    )
+    email = user.email
+    full_name = user.full_name
+
+    def _send() -> None:
+        try:
+            send_password_reset_email(email, full_name, new_password, login_url)
+            logger.info("Email de réinitialisation envoyé à %s", email)
+        except (EmailNotConfiguredError, EmailSendError) as exc:
+            logger.warning(
+                "Echec envoi reset password à %s : %s", email, exc
+            )
+
+    background_tasks.add_task(_send)
+
+    return {"email": email, "email_sent": True}
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),

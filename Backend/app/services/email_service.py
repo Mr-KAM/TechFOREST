@@ -153,6 +153,65 @@ def send_credentials_email(
     send_email(to_email, subject, html_body, text_body)
 
 
+def send_password_reset_email(
+    to_email: str,
+    full_name: str,
+    new_password: str,
+    login_url: str,
+) -> None:
+    """Notifie un utilisateur que son mot de passe a été réinitialisé par un admin."""
+    safe_name = (full_name or "").strip() or to_email
+    url = (login_url or "").strip() or "/"
+
+    subject = "Votre mot de passe TechFOREST a été réinitialisé"
+    text_body = (
+        f"Bonjour {safe_name},\n\n"
+        "Un administrateur vient de réinitialiser le mot de passe de votre "
+        "compte TechFOREST.\n\n"
+        "Voici votre nouveau mot de passe provisoire :\n"
+        f"  • Email      : {to_email}\n"
+        f"  • Mot de passe : {new_password}\n\n"
+        f"Connectez-vous ici : {url}\n\n"
+        "Pour des raisons de sécurité, changez ce mot de passe dès votre "
+        "prochaine connexion depuis la page \"Mon profil\".\n\n"
+        "Si vous n'êtes pas à l'origine de cette demande, contactez "
+        "immédiatement l'administrateur de la plateforme.\n\n"
+        "— L'équipe TechFOREST"
+    )
+    html_body = f"""\
+<!doctype html>
+<html lang="fr">
+  <body style="font-family: Arial, sans-serif; color:#111; line-height:1.5;">
+    <p>Bonjour <strong>{_escape(safe_name)}</strong>,</p>
+    <p>Un administrateur vient de <strong>réinitialiser le mot de passe</strong>
+       de votre compte TechFOREST.</p>
+    <p>Voici votre nouveau mot de passe provisoire :</p>
+    <ul>
+      <li><strong>Email</strong> : {_escape(to_email)}</li>
+      <li><strong>Mot de passe</strong> : <code>{_escape(new_password)}</code></li>
+    </ul>
+    <p>
+      <a href="{_escape(url)}"
+         style="display:inline-block;padding:10px 18px;background:#16a34a;
+                color:#fff;text-decoration:none;border-radius:6px;">
+        Se connecter à TechFOREST
+      </a>
+    </p>
+    <p style="color:#555;font-size:0.9em;">
+      Pour des raisons de sécurité, changez ce mot de passe dès votre
+      prochaine connexion depuis la page <em>« Mon profil »</em>.
+    </p>
+    <p style="color:#b91c1c;font-size:0.9em;">
+      Si vous n'êtes pas à l'origine de cette demande, contactez immédiatement
+      l'administrateur de la plateforme.
+    </p>
+    <p style="color:#555;font-size:0.9em;">— L'équipe TechFOREST</p>
+  </body>
+</html>
+"""
+    send_email(to_email, subject, html_body, text_body)
+
+
 def _escape(value: str) -> str:
     """Échappement HTML minimal pour les valeurs insérées dans le template."""
     return (
