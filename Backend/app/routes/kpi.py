@@ -128,7 +128,7 @@ async def get_public_summary():
         submissions = await _run_sync(get_form_submissions_raw, planting_uid)
         indicators = compute_form_indicators("planting_arbre", submissions)
         trees = next(
-            (int(i["value"]) for i in indicators if i["indicator_name"] == "Arbres plantés"),
+            (int(i["value"]) for i in indicators if i["indicator_name"] == "Arbres plantés (déclarés)"),
             0,
         )
         return {"trees_planted": trees}

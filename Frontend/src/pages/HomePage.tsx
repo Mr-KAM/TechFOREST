@@ -58,15 +58,39 @@ export default function HomePage() {
   const [treesPlanted, setTreesPlanted] = useState<number | null>(null);
 
   useEffect(() => {
-    getZones()
-      .then((zones) => {
-        const sum = zones.reduce((acc, z) => acc + (z.area_ha ?? 0), 0);
-        setTotalArea(sum);
-      })
-      .catch(() => setTotalArea(0));
-    getPublicSummary()
-      .then((s) => setTreesPlanted(s.trees_planted))
-      .catch(() => setTreesPlanted(0));
+    let cancelled = false;
+
+    const loadZones = () => {
+      getZones()
+        .then((zones) => {
+          if (cancelled) return;
+          const sum = zones.reduce((acc, z) => acc + (z.area_ha ?? 0), 0);
+          setTotalArea(sum);
+        })
+        .catch(() => {
+          if (!cancelled) setTotalArea(0);
+        });
+    };
+
+    const loadSummary = () => {
+      getPublicSummary()
+        .then((s) => {
+          if (!cancelled) setTreesPlanted(s.trees_planted);
+        })
+        .catch(() => {
+          if (!cancelled) setTreesPlanted(0);
+        });
+    };
+
+    loadZones();
+    loadSummary();
+
+    // Rafraîchit le compteur "Arbres reboisés" toutes les 60 secondes
+    const interval = window.setInterval(loadSummary, 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
   }, []);
 
   const areaLabel =
