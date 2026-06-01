@@ -5121,25 +5121,26 @@ function TeamMissionsTable({ data }: { data: TeamMissionsResponse | null }) {
               barCategoryGap="30%"
               barGap={2}
             >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
               <XAxis
                 dataKey="name"
-                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 10, fill: "var(--color-foreground)" }}
                 angle={-35}
                 textAnchor="end"
                 interval={0}
               />
               <YAxis
-                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 10, fill: "var(--color-foreground)" }}
                 allowDecimals={false}
                 width={28}
               />
               <Tooltip
                 contentStyle={{
                   fontSize: 12,
-                  background: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
+                  background: "var(--color-popover)",
+                  border: "1px solid var(--color-border)",
                   borderRadius: 6,
+                  color: "var(--color-popover-foreground)",
                 }}
                 formatter={(value: number, key: string) =>
                   [value, key === "missions" ? "Missions" : "Chef d'équipe"]

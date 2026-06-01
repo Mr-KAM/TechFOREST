@@ -857,6 +857,28 @@ export function deleteVideo(videoKey: string): Promise<MediaVideo> {
   return request<MediaVideo>(`/media/videos/${videoKey}`, { method: "DELETE" });
 }
 
+// ─── GEE service account (superadmin) ───────────────────────────────────
+
+export function getGeeCredentials(): Promise<{ available: boolean; path: string; size_bytes?: number; updated_at?: string }>{
+  return request(`/media/gee-credentials`);
+}
+
+export async function uploadGeeCredentials(file: File): Promise<{ uploaded: boolean; path: string; gee_initialized: boolean; gee_error?: string }>{
+  const token = localStorage.getItem("token");
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_BASE}/media/gee-credentials/upload`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(body.detail || `Erreur ${res.status}`);
+  }
+  return res.json();
+}
+
 // ─── Export Excel des soumissions Kobo ─────────────────────────────────────
 
 /**

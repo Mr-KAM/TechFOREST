@@ -887,8 +887,6 @@ def _indicators_planting(submissions: list[dict]) -> list[dict]:
         {"indicator_name": "Missions Zaranou", "value": missions_zaranou, "unit": "missions", "period": None},
         {"indicator_name": "Missions Apouéba", "value": missions_apoueba, "unit": "missions", "period": None},
         {"indicator_name": "Jours d'enquête", "value": len(jours), "unit": "jours", "period": None},
-        {"indicator_name": "Écogardes mobilisés", "value": len(membres), "unit": "agents", "period": None},
-        {"indicator_name": "Responsables de mission", "value": len(responsables), "unit": "responsables", "period": None},
         # Espèces
         {"indicator_name": "Espèces plantées", "value": len(especes_codes), "unit": "espèces", "period": None},
         {"indicator_name": "Espèce dominante", "value": espece_dominante_value, "unit": espece_dominante_label, "period": None},
@@ -898,16 +896,9 @@ def _indicators_planting(submissions: list[dict]) -> list[dict]:
         {"indicator_name": "Parcelles en RNA", "value": types_reboisement.get("rna", 0), "unit": "parcelles", "period": None},
         # Origine des plants
         {"indicator_name": "Plants issus de pépinière", "value": origines_plants.get("pepiniere", 0), "unit": "parcelles", "period": None},
-        {"indicator_name": "Plants achetés", "value": origines_plants.get("achat", 0), "unit": "parcelles", "period": None},
-        {"indicator_name": "Plants reçus en don", "value": origines_plants.get("don", 0), "unit": "parcelles", "period": None},
         # Qualité de collecte
-        {"indicator_name": "Taux parcelles photographiées", "value": _pct(photos_parcelle, n_missions), "unit": "%", "period": None},
         {"indicator_name": "Taux parcelles délimitées (GPS)", "value": _pct(delimitations, n_missions), "unit": "%", "period": None},
-        {"indicator_name": "Taux GPS centre parcelle", "value": _pct(centres_gps, n_missions), "unit": "%", "period": None},
-        {"indicator_name": "Taux missions avec photo équipe", "value": _pct(photos_equipe, n_missions), "unit": "%", "period": None},
-        {"indicator_name": "Taux missions avec signature", "value": _pct(signatures, n_missions), "unit": "%", "period": None},
         {"indicator_name": "Taux missions avec commentaire", "value": _pct(commentaires, n_missions), "unit": "%", "period": None},
-        {"indicator_name": "Taux cohérence plants déclarés/comptés", "value": taux_coherence, "unit": "%", "period": None},
     ]
 
 
@@ -2883,10 +2874,20 @@ _CHEF_FIELDS_BY_FOREST: dict[str, str] = {
 _MEMBRE_FIELDS_ALL = list(_MEMBRE_FIELDS_BY_FOREST.values())
 _CHEF_FIELDS_ALL = list(_CHEF_FIELDS_BY_FOREST.values())
 
-# Champs génériques (formulaires utilisant la section `metadonnees_collecte`,
-# notamment le nouveau Suivi faune).
-_MEMBRE_FIELDS_GENERIC = ("metadonnees_collecte/membres_mission",)
-_CHEF_FIELDS_GENERIC = ("metadonnees_collecte/responsable_mission",)
+# Champs génériques par ordre de priorité :
+#   1. metadonnees_collecte/membres_mission         → monitoring_faune, menaces
+#   2. equipe_collecte/membres_mission              → monitoring_reboisement
+#   3. metadonnees_collecte/equipe_collecte/…       → planting_arbre
+_MEMBRE_FIELDS_GENERIC = (
+    "metadonnees_collecte/membres_mission",
+    "equipe_collecte/membres_mission",
+    "metadonnees_collecte/equipe_collecte/membres_mission",
+)
+_CHEF_FIELDS_GENERIC = (
+    "metadonnees_collecte/responsable_mission",
+    "equipe_collecte/responsable_mission",
+    "metadonnees_collecte/equipe_collecte/responsable_mission",
+)
 
 
 def _get_nested_field(sub: dict, *paths: str) -> str | None:

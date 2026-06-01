@@ -175,6 +175,102 @@ def delete_video(video_key: str):
     return _video_meta(video_key, filename)
 
 
+@router.get("/gee-credentials")
+def get_gee_credentials():
+    """Retourne l'état du fichier de credentials GEE configuré."""
+    fname = settings.GEE_CREDENTIALS_FILE
+    if not fname:
+        return {"available": False, "path": fname}
+    filepath = os.path.abspath(fname)
+    if os.path.isfile(filepath):
+        size = os.path.getsize(filepath)
+        mtime = (
+            datetime.fromtimestamp(os.path.getmtime(filepath), tz=timezone.utc).isoformat()
+        )
+        return {"available": True, "path": fname, "size_bytes": size, "updated_at": mtime}
+    return {"available": False, "path": fname}
+
+
+@router.post("/gee-credentials/upload", dependencies=[Depends(require_superadmin)])
+async def upload_gee_credentials(file: UploadFile = File(...)):
+    """Téléverse un fichier JSON de service account GEE (superadmin uniquement)."""
+    if file.content_type and not (
+        file.content_type.startswith("application/json")
+        or file.content_type == "application/octet-stream"
+    ):
+        raise HTTPException(status_code=415, detail=f"Type non supporte: {file.content_type}")
+
+    try:
+        content = await file.read()
+    finally:
+        try:
+            await file.close()
+        except Exception:
+            pass
+
+    try:
+        import json as _json
+        data = _json.loads(content)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Fichier JSON invalide: {exc}") from exc
+
+    if not isinstance(data, dict) or data.get("type") != "service_account":
+        raise HTTPException(
+            status_code=400,
+            detail="Le fichier doit etre un service account JSON (type='service_account')",
+        )
+
+    target = os.path.abspath(settings.GEE_CREDENTIALS_FILE)
+    target_dir = os.path.dirname(target) or "."
+
+    import tempfile
+    try:
+        os.makedirs(target_dir, exist_ok=True)
+        # Unique tmp per request avoids collisions with leftover locked files (OneDrive, etc.)
+        fd, tmp_path = tempfile.mkstemp(dir=target_dir, prefix=".gee_upload_")
+        try:
+            with os.fdopen(fd, "wb") as out:
+                out.write(content)
+            os.replace(tmp_path, target)
+        except OSError:
+            # Atomic replace failed; fall back to direct write
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+            with open(target, "wb") as out:
+                out.write(content)
+    except OSError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Impossible d'enregistrer les credentials GEE: {exc}",
+        ) from exc
+
+    gee_initialized = False
+    gee_error = None
+    try:
+        import importlib
+        gs = importlib.import_module("app.services.gee_service")
+        if hasattr(gs, "_initialized"):
+            setattr(gs, "_initialized", False)
+        try:
+            gs._init_gee()
+            gee_initialized = True
+        except Exception as init_err:
+            gee_error = str(init_err)
+    except Exception as exc:
+        gee_error = f"Impossible de tester l'initialisation GEE: {exc}"
+
+    response = {
+        "uploaded": True,
+        "path": settings.GEE_CREDENTIALS_FILE,
+        "gee_initialized": gee_initialized,
+    }
+    if gee_error:
+        response["gee_error"] = gee_error
+    return response
+
+
 # ─── Proxy d'images KoboToolbox ────────────────────────────────
 # Les URLs `download_url` des pièces jointes Kobo nécessitent l'en-tête
 # `Authorization: Token <KOBO_API_TOKEN>` pour être servies. Comme une balise

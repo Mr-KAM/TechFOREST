@@ -10,6 +10,8 @@ import {
   listVideos,
   uploadVideo,
   deleteVideo,
+  getGeeCredentials,
+  uploadGeeCredentials,
   type UserProfile,
   type AdminUserCreate,
   type MediaVideo,
@@ -371,6 +373,7 @@ export default function AdminPage() {
       </Card>
 
       {isSuperadminUser && <HomeVideosCard onError={setError} onInfo={setInfo} />}
+      {isSuperadminUser && <GeeCredentialsCard onError={setError} onInfo={setInfo} />}
     </div>
   );
 }
@@ -554,6 +557,125 @@ function HomeVideosCard({
             })}
             {videos.length === 0 && (
               <p className="text-sm text-muted-foreground">Aucune vidéo configurée.</p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Carte de gestion des credentials GEE (superadmin uniquement) ───────
+function GeeCredentialsCard({ onError, onInfo }: { onError: (msg: string | null) => void; onInfo: (msg: string | null) => void; }) {
+  const [status, setStatus] = useState<{ available: boolean; path: string; size_bytes?: number; updated_at?: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [geeTest, setGeeTest] = useState<{ initialized: boolean; error?: string } | null>(null);
+  const fileInput = useRef<HTMLInputElement | null>(null);
+
+  const refresh = async () => {
+    setLoading(true);
+    try {
+      setStatus(await getGeeCredentials());
+    } catch (err) {
+      onError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  const handleFile = async (file: File) => {
+    onError(null);
+    onInfo(null);
+    setUploading(true);
+    setGeeTest(null);
+    try {
+      const result = await uploadGeeCredentials(file);
+      setGeeTest({ initialized: result.gee_initialized, error: result.gee_error });
+      if (result.gee_initialized) {
+        onInfo("Credentials GEE televersees et initialises avec succes.");
+      } else {
+        onError(`Credentials televersees mais erreur GEE: ${result.gee_error || "Initialisation impossible"}`);
+      }
+      await refresh();
+    } catch (err) {
+      onError((err as Error).message);
+    } finally {
+      setUploading(false);
+      if (fileInput.current) fileInput.current.value = "";
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">Compte de service GEE</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Téléversez un fichier JSON de type service account pour Google Earth Engine. Le fichier sera utilisé par le backend pour s'authentifier auprès de GEE.
+        </p>
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Fichier configuré</div>
+                <div className="text-xs text-muted-foreground">
+                  {status?.available ? (
+                    <>
+                      <span className="font-mono">{status.path}</span>
+                      {" · maj "}
+                      {status.updated_at ? new Date(status.updated_at).toLocaleString("fr-FR") : ""}
+                    </>
+                  ) : (
+                    <span className="text-amber-600">Aucun fichier present</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileInput}
+                  type="file"
+                  accept="application/json"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleFile(f);
+                  }}
+                />
+                <Button size="sm" variant="outline" onClick={() => fileInput.current?.click()} disabled={uploading}>
+                  {uploading ? (
+                    <>
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Téléversement...
+                    </>
+                  ) : (
+                    "Téléverser / remplacer"
+                  )}
+                </Button>
+              </div>
+            </div>
+            {geeTest && (
+              <div className="flex items-start justify-between border-t pt-3">
+                <div>
+                  <div className="font-medium">Test d'initialisation GEE</div>
+                  {geeTest.initialized ? (
+                    <div className="text-xs text-emerald-600 mt-1">✓ Credentials valides et initialisés</div>
+                  ) : (
+                    <div className="text-xs text-destructive mt-1">✗ Erreur : {geeTest.error}</div>
+                  )}
+                </div>
+                <Badge variant={geeTest.initialized ? "default" : "destructive"} className="flex-shrink-0">
+                  {geeTest.initialized ? "OK" : "Erreur"}
+                </Badge>
+              </div>
             )}
           </div>
         )}
