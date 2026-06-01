@@ -740,23 +740,58 @@ export function getMenacesBreakdowns(): Promise<MenacesBreakdowns> {
   return request("/kpi/menaces/breakdowns");
 }
 
-export interface EcogardeStats {
-  username: string;
+// ─── Écogardes (profils DB + stats Kobo) ──────────────────────────────────
+
+export interface EcogardeProfile {
+  id: number;
+  nom: string;
+  prenom: string;
+  code_kobo: string;
+  foret: string | null;
+  telephone: string | null;
+  date_recrutement: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string | null;
+  // stats Kobo calculées
   total_submissions: number;
   total_missions: number;
   forms_covered: number;
   by_form: Record<string, number>;
+  derniere_mission: string | null;
 }
 
-export interface EcogardesResponse {
-  total_ecogardes: number;
-  total_submissions: number;
-  total_missions: number;
-  ecogardes: EcogardeStats[];
+export interface EcogardesListResponse {
+  total: number;
+  ecogardes: EcogardeProfile[];
 }
 
-export function getEcogardesStats(): Promise<EcogardesResponse> {
-  return request("/kpi/ecogardes");
+export interface EcogardeCreate {
+  nom: string;
+  prenom: string;
+  code_kobo: string;
+  foret?: string | null;
+  telephone?: string | null;
+  date_recrutement?: string | null;
+  notes?: string | null;
+  is_active?: boolean;
+}
+
+export function listEcogardes(): Promise<EcogardesListResponse> {
+  return request("/ecogardes");
+}
+
+export function createEcogarde(data: EcogardeCreate): Promise<EcogardeProfile> {
+  return request("/ecogardes", { method: "POST", body: JSON.stringify(data) });
+}
+
+export function updateEcogarde(id: number, data: Partial<EcogardeCreate & { is_active: boolean }>): Promise<EcogardeProfile> {
+  return request(`/ecogardes/${id}`, { method: "PATCH", body: JSON.stringify(data) });
+}
+
+export function deleteEcogarde(id: number): Promise<void> {
+  return request(`/ecogardes/${id}`, { method: "DELETE" });
 }
 
 export interface EcogardeInTeam {

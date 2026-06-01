@@ -10,8 +10,6 @@ from app.concurrency import run_sync
 
 from app.models.user import User
 from app.schemas.kpi import (
-    EcogardeStats,
-    EcogardesResponse,
     EcogardeInTeam,
     ForestsResponse,
     FormForests,
@@ -37,7 +35,6 @@ from app.schemas.kpi import (
 )
 from app.security import get_current_user
 from app.services.kobo_service import (
-    compute_ecogarde_stats,
     compute_form_indicators,
     compute_faune_breakdowns,
     compute_form_indicators_by_forest,
@@ -371,40 +368,6 @@ async def get_menaces_breakdowns(current_user: User = Depends(get_current_user))
     submissions = await _run_sync(get_form_submissions_raw, uid)
     data = compute_menaces_breakdowns(submissions)
     return MenacesBreakdowns(**data)
-
-
-@router.get("/ecogardes", response_model=EcogardesResponse)
-async def get_ecogardes_stats(current_user: User = Depends(get_current_user)):
-    """
-    Statistiques par écogarde (agent collecteur Kobo) sur tous les
-    formulaires configurés :
-    - total_submissions : nombre total de soumissions
-    - total_missions : nombre de jours distincts d'intervention sur le terrain
-    - forms_covered : nombre d'activités auxquelles il a participé
-    - by_form : détail par formulaire
-    """
-    settings = get_settings()
-    items = [(key, uid) for key, uid in settings.kobo_form_uids.items() if uid]
-
-    async def _one(key: str, uid: str) -> tuple[str, str, list[dict]]:
-        try:
-            metadata, submissions = await asyncio.gather(
-                _run_sync(get_form_metadata, uid),
-                _run_sync(get_form_submissions_raw, uid),
-            )
-            return key, metadata.get("name", key), submissions
-        except Exception:
-            return key, key, []
-
-    forms_with_submissions = await asyncio.gather(*[_one(k, u) for k, u in items])
-    raw_stats = compute_ecogarde_stats(list(forms_with_submissions))
-
-    return EcogardesResponse(
-        total_ecogardes=len(raw_stats),
-        total_submissions=sum(e["total_submissions"] for e in raw_stats),
-        total_missions=sum(e["total_missions"] for e in raw_stats),
-        ecogardes=[EcogardeStats(**e) for e in raw_stats],
-    )
 
 
 @router.get("/teams", response_model=TeamsResponse)

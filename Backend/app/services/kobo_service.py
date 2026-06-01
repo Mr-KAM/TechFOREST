@@ -1840,13 +1840,15 @@ def compute_ecogarde_stats(
 
     result: list[dict] = []
     for username, e in stats.items():
+        days = e["mission_days"]
         result.append(
             {
                 "username": username,
                 "total_submissions": e["total_submissions"],
-                "total_missions": len(e["mission_days"]) or e["total_submissions"],
+                "total_missions": len(days) or e["total_submissions"],
                 "forms_covered": len(e["forms_covered"]),
                 "by_form": dict(e["by_form"]),
+                "derniere_mission": max(days) if days else None,
             }
         )
     result.sort(key=lambda x: x["total_submissions"], reverse=True)

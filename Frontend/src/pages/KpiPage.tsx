@@ -3,7 +3,6 @@ import {
   getConfiguredKoboForms,
   getFormKpiDashboard,
   getGlobalIndicators,
-  getEcogardesStats,
   getTeamsStats,
   getTeamMissions,
   getIndicatorsByForest,
@@ -14,13 +13,19 @@ import {
   getPlantingBreakdowns,
   getFauneBreakdowns,
   getMenacesBreakdowns,
+  listEcogardes,
+  createEcogarde,
+  updateEcogarde,
+  deleteEcogarde,
   withAuthQuery,
   type SubmissionLocation,
   type TimelineEntry,
   type KoboFormConfigured,
   type FormKpiDashboard,
   type GlobalIndicators,
-  type EcogardesResponse,
+  type EcogardeProfile,
+  type EcogardesListResponse,
+  type EcogardeCreate,
   type TeamsResponse,
   type TeamStats,
   type TeamMissionsResponse,
@@ -111,9 +116,13 @@ import {
   CalendarCheck,
   UserCheck,
   TreeDeciduous,
+  UserPlus,
+  Pencil,
+  Trash2,
+  Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth, ROLES } from "@/lib/auth";
+import { useAuth, ROLES, isAdmin } from "@/lib/auth";
 import { MapContainer, TileLayer, CircleMarker, Popup, LayersControl, ScaleControl, GeoJSON, useMap } from "react-leaflet";
 import type { LatLngBoundsExpression, LatLngTuple } from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -5352,14 +5361,551 @@ function TeamMissionsTable({ data }: { data: TeamMissionsResponse | null }) {
   );
 }
 
+// ─── Composant EcogardesTab ─────────────────────────────────────────────────
+
+const FORET_OPTIONS = ["Zaranou", "Apouéba"];
+
+const EMPTY_FORM: EcogardeCreate = {
+  nom: "",
+  prenom: "",
+  code_kobo: "",
+  foret: null,
+  telephone: null,
+  date_recrutement: null,
+  notes: null,
+  is_active: true,
+};
+
+function EcogardeCard({
+  eco,
+  isAdmin,
+  onEdit,
+  onDelete,
+}: {
+  eco: EcogardeProfile;
+  isAdmin: boolean;
+  onEdit: (eco: EcogardeProfile) => void;
+  onDelete: (eco: EcogardeProfile) => void;
+}) {
+  const initials = `${eco.prenom[0] ?? ""}${eco.nom[0] ?? ""}`.toUpperCase();
+  return (
+    <Card className={`transition-shadow hover:shadow-md ${!eco.is_active ? "opacity-60" : ""}`}>
+      <CardContent className="p-4 flex flex-col gap-3">
+        {/* En-tête : avatar + identité + actions */}
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0 text-sm font-bold text-primary select-none">
+            {initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold text-sm leading-snug">
+              {eco.prenom} <span className="uppercase">{eco.nom}</span>
+            </div>
+            <div className="flex flex-wrap gap-1 mt-1">
+              <Badge variant="outline" className="text-[10px] font-mono px-1.5">
+                {eco.code_kobo}
+              </Badge>
+              {eco.foret && (
+                <Badge className="text-[10px] bg-emerald-600/90 text-white hover:bg-emerald-600/90">
+                  {eco.foret}
+                </Badge>
+              )}
+              {!eco.is_active && (
+                <Badge variant="destructive" className="text-[10px]">
+                  Inactif
+                </Badge>
+              )}
+            </div>
+          </div>
+          {isAdmin && (
+            <div className="flex gap-0.5 shrink-0">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={() => onEdit(eco)}
+                title="Modifier"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={() => onDelete(eco)}
+                title="Supprimer"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Stats Kobo */}
+        <div className="grid grid-cols-3 gap-1 text-center border rounded-lg p-2 bg-muted/30">
+          <div>
+            <div className="text-base font-bold text-primary">{eco.total_missions}</div>
+            <div className="text-[10px] text-muted-foreground leading-tight">Missions</div>
+          </div>
+          <div className="border-x">
+            <div className="text-base font-bold">{eco.total_submissions}</div>
+            <div className="text-[10px] text-muted-foreground leading-tight">Observations</div>
+          </div>
+          <div>
+            <div className="text-base font-bold">{eco.forms_covered}</div>
+            <div className="text-[10px] text-muted-foreground leading-tight">Activités</div>
+          </div>
+        </div>
+
+        {/* Répartition par formulaire */}
+        {Object.keys(eco.by_form).length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {Object.entries(eco.by_form).map(([key, count]) => (
+              <span
+                key={key}
+                className="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium"
+                style={{
+                  borderColor: `${FORM_META[key]?.color ?? "#6b7280"}50`,
+                  color: FORM_META[key]?.color ?? "#6b7280",
+                  backgroundColor: `${FORM_META[key]?.color ?? "#6b7280"}10`,
+                }}
+              >
+                {FORM_META[key]?.label ?? key} : {count}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Informations complémentaires */}
+        <div className="space-y-1">
+          {eco.derniere_mission && (
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <CalendarDays className="h-3 w-3 shrink-0" />
+              Dernière mission : <span className="font-medium">{eco.derniere_mission}</span>
+            </div>
+          )}
+          {!eco.derniere_mission && eco.total_submissions === 0 && (
+            <div className="text-[11px] text-muted-foreground italic">
+              Aucune donnée Kobo correspondante
+            </div>
+          )}
+          {eco.telephone && (
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Phone className="h-3 w-3 shrink-0" />
+              {eco.telephone}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function EcogardesTab({
+  isAdmin,
+  initialProfiles,
+}: {
+  isAdmin: boolean;
+  initialProfiles: EcogardesListResponse | null;
+}) {
+  const [profiles, setProfiles] = useState<EcogardeProfile[]>(
+    initialProfiles?.ecogardes ?? []
+  );
+  const [loading, setLoading] = useState(!initialProfiles);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+
+  const [showModal, setShowModal] = useState(false);
+  const [editTarget, setEditTarget] = useState<EcogardeProfile | null>(null);
+  const [form, setForm] = useState<EcogardeCreate>(EMPTY_FORM);
+
+  const [search, setSearch] = useState("");
+  const [filterForet, setFilterForet] = useState("all");
+  const [filterActif, setFilterActif] = useState("all");
+
+  const refresh = async () => {
+    setLoading(true);
+    try {
+      const res = await listEcogardes();
+      setProfiles(res.ecogardes);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!initialProfiles) refresh();
+  }, []);
+
+  const openCreate = () => {
+    setEditTarget(null);
+    setForm(EMPTY_FORM);
+    setError(null);
+    setInfo(null);
+    setShowModal(true);
+  };
+
+  const openEdit = (eco: EcogardeProfile) => {
+    setEditTarget(eco);
+    setForm({
+      nom: eco.nom,
+      prenom: eco.prenom,
+      code_kobo: eco.code_kobo,
+      foret: eco.foret,
+      telephone: eco.telephone,
+      date_recrutement: eco.date_recrutement,
+      notes: eco.notes,
+      is_active: eco.is_active,
+    });
+    setError(null);
+    setInfo(null);
+    setShowModal(true);
+  };
+
+  const handleDelete = async (eco: EcogardeProfile) => {
+    if (!confirm(`Supprimer définitivement le profil de ${eco.prenom} ${eco.nom} ?`)) return;
+    setError(null);
+    try {
+      await deleteEcogarde(eco.id);
+      setInfo(`Profil supprimé : ${eco.prenom} ${eco.nom}`);
+      await refresh();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      if (editTarget) {
+        await updateEcogarde(editTarget.id, form);
+        setInfo(`Profil mis à jour : ${form.prenom} ${form.nom}`);
+      } else {
+        await createEcogarde(form);
+        setInfo(`Écogarde créé : ${form.prenom} ${form.nom}`);
+      }
+      setShowModal(false);
+      await refresh();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const filtered = profiles.filter((p) => {
+    if (filterForet !== "all" && p.foret !== filterForet) return false;
+    if (filterActif === "actif" && !p.is_active) return false;
+    if (filterActif === "inactif" && p.is_active) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (
+        !p.nom.toLowerCase().includes(q) &&
+        !p.prenom.toLowerCase().includes(q) &&
+        !p.code_kobo.toLowerCase().includes(q)
+      )
+        return false;
+    }
+    return true;
+  });
+
+  const totalMissions = filtered.reduce((s, p) => s + p.total_missions, 0);
+  const totalObs = filtered.reduce((s, p) => s + p.total_submissions, 0);
+
+  return (
+    <div className="space-y-4">
+      {/* Barre d'outils */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher…"
+              className="h-9 pl-8 pr-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring w-44"
+            />
+          </div>
+          <Select value={filterForet} onValueChange={setFilterForet}>
+            <SelectTrigger className="h-9 w-36 text-sm">
+              <SelectValue placeholder="Toutes forêts" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes forêts</SelectItem>
+              {FORET_OPTIONS.map((f) => (
+                <SelectItem key={f} value={f}>{f}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterActif} onValueChange={setFilterActif}>
+            <SelectTrigger className="h-9 w-32 text-sm">
+              <SelectValue placeholder="Statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous statuts</SelectItem>
+              <SelectItem value="actif">Actifs</SelectItem>
+              <SelectItem value="inactif">Inactifs</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {isAdmin && (
+          <Button size="sm" onClick={openCreate} className="gap-1.5">
+            <UserPlus className="h-4 w-4" />
+            Ajouter un écogarde
+          </Button>
+        )}
+      </div>
+
+      {/* Notifications */}
+      {error && (
+        <div className="rounded-md bg-destructive/10 border border-destructive/30 px-4 py-2 text-sm text-destructive flex justify-between">
+          {error}
+          <button onClick={() => setError(null)} className="ml-2">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+      {info && (
+        <div className="rounded-md bg-emerald-500/10 border border-emerald-500/30 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-400 flex justify-between">
+          {info}
+          <button onClick={() => setInfo(null)} className="ml-2">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Résumé */}
+      {!loading && profiles.length > 0 && (
+        <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
+          <Card>
+            <CardContent className="py-3 px-4">
+              <div className="text-2xl font-bold">{filtered.length}</div>
+              <div className="text-xs text-muted-foreground">Écogardes</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="py-3 px-4">
+              <div className="text-2xl font-bold text-primary">{totalMissions}</div>
+              <div className="text-xs text-muted-foreground">Missions cumulées</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="py-3 px-4">
+              <div className="text-2xl font-bold">{totalObs}</div>
+              <div className="text-xs text-muted-foreground">Observations</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Contenu principal */}
+      {loading ? (
+        <div className="flex items-center justify-center py-16 text-sm text-muted-foreground gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Chargement des profils…
+        </div>
+      ) : filtered.length === 0 ? (
+        <Card>
+          <CardContent className="py-14 text-center text-sm text-muted-foreground">
+            {profiles.length === 0
+              ? "Aucun écogarde enregistré. Cliquez sur « Ajouter un écogarde » pour commencer."
+              : "Aucun profil ne correspond aux filtres sélectionnés."}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filtered.map((eco) => (
+            <EcogardeCard
+              key={eco.id}
+              eco={eco}
+              isAdmin={isAdmin}
+              onEdit={openEdit}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Modal de création / édition */}
+      {showModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowModal(false);
+          }}
+        >
+          <div className="bg-background rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <h2 className="text-base font-semibold">
+                {editTarget ? "Modifier l'écogarde" : "Nouvel écogarde"}
+              </h2>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8"
+                onClick={() => setShowModal(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Prénom *</label>
+                  <input
+                    required
+                    value={form.prenom}
+                    onChange={(e) => setForm((f) => ({ ...f, prenom: e.target.value }))}
+                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Nom *</label>
+                  <input
+                    required
+                    value={form.nom}
+                    onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))}
+                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium">
+                  Code Kobo *{" "}
+                  <span className="text-muted-foreground font-normal">
+                    (identifiant dans les soumissions Kobo)
+                  </span>
+                </label>
+                <input
+                  required
+                  value={form.code_kobo}
+                  onChange={(e) => setForm((f) => ({ ...f, code_kobo: e.target.value }))}
+                  placeholder="ex: dupont_jean ou jean.dupont"
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Forêt</label>
+                  <Select
+                    value={form.foret ?? "none"}
+                    onValueChange={(v) =>
+                      setForm((f) => ({ ...f, foret: v === "none" ? null : v }))
+                    }
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="Toutes forêts" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Toutes</SelectItem>
+                      {FORET_OPTIONS.map((f) => (
+                        <SelectItem key={f} value={f}>{f}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Téléphone</label>
+                  <input
+                    type="tel"
+                    value={form.telephone ?? ""}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, telephone: e.target.value || null }))
+                    }
+                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium">Date de recrutement</label>
+                <input
+                  type="date"
+                  value={form.date_recrutement ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      date_recrutement: e.target.value || null,
+                    }))
+                  }
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium">Notes</label>
+                <textarea
+                  rows={3}
+                  value={form.notes ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, notes: e.target.value || null }))
+                  }
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                />
+              </div>
+
+              {editTarget && (
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={form.is_active ?? true}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, is_active: e.target.checked }))
+                    }
+                    className="h-4 w-4"
+                  />
+                  Actif
+                </label>
+              )}
+
+              {error && (
+                <div className="rounded-md bg-destructive/10 border border-destructive/30 px-3 py-2 text-xs text-destructive">
+                  {error}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowModal(false)}
+                  disabled={submitting}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit" size="sm" disabled={submitting}>
+                  {submitting ? (
+                    <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Enregistrement…</>
+                  ) : editTarget ? "Mettre à jour" : "Créer"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function KpiPage() {
   const { user } = useAuth();
   const isViewer = user?.role === ROLES.VIEWER;
   const isSuperadminUser = user?.role === ROLES.SUPERADMIN;
+  const isAdminUser = isAdmin(user);
   const koboBaseUrl = (import.meta.env.VITE_KOBO_URL as string | undefined) ?? "https://kf.kobotoolbox.org";
   const [configuredForms, setConfiguredForms] = useState<KoboFormConfigured[]>([]);
   const [globalIndicators, setGlobalIndicators] = useState<GlobalIndicators | null>(null);
-  const [ecogardes, setEcogardes] = useState<EcogardesResponse | null>(null);
+  const [ecogardesProfiles, setEcogardesProfiles] = useState<EcogardesListResponse | null>(null);
   const [teams, setTeams] = useState<TeamsResponse | null>(null);
   const [teamMissions, setTeamMissions] = useState<TeamMissionsResponse | null>(null);
   const [byForest, setByForest] = useState<IndicatorsByForestResponse | null>(null);
@@ -5380,10 +5926,10 @@ export default function KpiPage() {
   const [globalMonth, setGlobalMonth] = useState<string>("all");
 
   const loadAll = async () => {
-    const [forms, indicators, ecg, tm, bf, tl, tmissions] = await Promise.all([
+    const [forms, indicators, ecgProfiles, tm, bf, tl, tmissions] = await Promise.all([
       getConfiguredKoboForms(),
       getGlobalIndicators(),
-      getEcogardesStats().catch(() => null),
+      listEcogardes().catch(() => null),
       getTeamsStats().catch(() => null),
       getIndicatorsByForest().catch(() => null),
       getTimeline().catch(() => [] as TimelineEntry[]),
@@ -5391,7 +5937,7 @@ export default function KpiPage() {
     ]);
     setConfiguredForms(forms);
     setGlobalIndicators(indicators);
-    setEcogardes(ecg);
+    setEcogardesProfiles(ecgProfiles);
     setTeams(tm);
     setByForest(bf);
     setTimeline(tl);
@@ -5909,12 +6455,14 @@ export default function KpiPage() {
           <TabsTrigger value="menaces" className="gap-1.5">
             <AlertTriangle className="h-3.5 w-3.5" /> Suivi menaces
           </TabsTrigger>
-          <TabsTrigger value="ecogardes" className="gap-1.5">
-            <Users className="h-3.5 w-3.5" /> Écogardes
-          </TabsTrigger>
           <TabsTrigger value="teams" className="gap-1.5">
-            <Users className="h-3.5 w-3.5" /> Équipes
+            <Users className="h-3.5 w-3.5" /> Équipes et missions
           </TabsTrigger>
+          {isAdminUser && (
+            <TabsTrigger value="ecogardes" className="gap-1.5">
+              <Users className="h-3.5 w-3.5" /> Écogardes
+            </TabsTrigger>
+          )}
           <TabsTrigger value="activites">Par activité</TabsTrigger>
           {!isViewer && <TabsTrigger value="list">Formulaires</TabsTrigger>}
         </TabsList>
@@ -6096,221 +6644,20 @@ export default function KpiPage() {
           );
         })}
 
-        {/* ─── Écogardes ───────────────────────────────────── */}
-        <TabsContent value="ecogardes">
-          {!ecogardes ? (
-            <Card>
-              <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                Aucune donnée disponible.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Agents collecteurs
-                    </CardTitle>
-                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Users className="h-4 w-4 text-primary" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">{ecogardes.total_ecogardes}</div>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Badge variant="secondary" className="text-[10px] h-5">
-                        membres de l'équipe
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Observations collectées
-                    </CardTitle>
-                    <div className="h-8 w-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-                      <Database className="h-4 w-4 text-cyan-500" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">
-                      {ecogardes.total_submissions}
-                    </div>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Badge variant="secondary" className="text-[10px] h-5">
-                        toutes activités
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Sorties terrain
-                    </CardTitle>
-                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                      <ClipboardList className="h-4 w-4 text-amber-500" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">
-                      {ecogardes.total_missions}
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                      jours de collecte cumulés
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">
-                    Observations par agent collecteur
-                  </CardTitle>
-                  <CardDescription>
-                    Top des membres de l'équipe terrain (toutes activités confondues)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={ecogardes.ecogardes.slice(0, 15).map((e) => ({
-                        name: e.username,
-                        observations: e.total_submissions,
-                        missions: e.total_missions,
-                      }))}
-                      margin={{ bottom: 50 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                      <XAxis
-                        dataKey="name"
-                        tick={{ fontSize: 10, fill: "var(--color-muted-foreground)" }}
-                        angle={-25}
-                        textAnchor="end"
-                        height={70}
-                        stroke="var(--color-border)"
-                        interval={0}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
-                        stroke="var(--color-border)"
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "var(--color-card)",
-                          border: "1px solid var(--color-border)",
-                          borderRadius: "8px",
-                          fontSize: "12px",
-                          color: "var(--color-card-foreground)",
-                        }}
-                        formatter={(v: number, k: string) => [
-                          v,
-                          k === "observations" ? "Observations" : "Sorties terrain",
-                        ]}
-                      />
-                      <Legend
-                        formatter={(k: string) =>
-                          k === "observations" ? "Observations" : "Sorties terrain"
-                        }
-                        wrapperStyle={{ fontSize: "12px" }}
-                      />
-                      <Bar dataKey="observations" fill="#22d3ee" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="missions" fill="#16a34a" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Équipe de collecte</CardTitle>
-                  <CardDescription>
-                    Détail par membre — observations, sorties terrain et activités couvertes
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="text-left text-muted-foreground">
-                        <tr className="border-b">
-                          <th className="py-2 pr-3 font-medium">Agent</th>
-                          <th className="py-2 pr-3 font-medium text-right">
-                            Observations
-                          </th>
-                          <th className="py-2 pr-3 font-medium text-right">
-                            Sorties terrain
-                          </th>
-                          <th className="py-2 pr-3 font-medium text-right">
-                            Activités
-                          </th>
-                          <th className="py-2 pr-3 font-medium">Détail activités</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ecogardes.ecogardes.map((e) => (
-                          <tr key={e.username} className="border-b last:border-0">
-                            <td className="py-2 pr-3">
-                              <div className="flex items-center gap-2">
-                                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                  <Users className="h-3.5 w-3.5 text-primary" />
-                                </div>
-                                <span className="font-medium">{e.username}</span>
-                              </div>
-                            </td>
-                            <td className="py-2 pr-3 text-right font-bold">
-                              {e.total_submissions}
-                            </td>
-                            <td className="py-2 pr-3 text-right">
-                              {e.total_missions}
-                            </td>
-                            <td className="py-2 pr-3 text-right">
-                              {e.forms_covered}
-                            </td>
-                            <td className="py-2 pr-3">
-                              <div className="flex flex-wrap gap-1">
-                                {Object.entries(e.by_form).map(([key, count]) => (
-                                  <Badge
-                                    key={key}
-                                    variant="outline"
-                                    className="text-[10px]"
-                                    style={{
-                                      borderColor: `${FORM_META[key]?.color ?? "#6b7280"}40`,
-                                      color: FORM_META[key]?.color,
-                                    }}
-                                  >
-                                    {FORM_META[key]?.label ?? key} : {count}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                        {ecogardes.ecogardes.length === 0 && (
-                          <tr>
-                            <td
-                              colSpan={5}
-                              className="py-6 text-center text-muted-foreground"
-                            >
-                              Aucun agent identifié dans les observations.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </TabsContent>
-
-        {/* ─── Équipes de terrain ───────────────────────────── */}
+        {/* ─── Équipes et missions ────────────────────────────── */}
         <TabsContent value="teams">
           <TeamMissionsTable data={teamMissions} />
         </TabsContent>
+
+        {/* ─── Écogardes (Admin/Superadmin uniquement) ────── */}
+        {isAdminUser && (
+          <TabsContent value="ecogardes">
+            <EcogardesTab
+              isAdmin={isAdminUser}
+              initialProfiles={ecogardesProfiles}
+            />
+          </TabsContent>
+        )}
 
         {/* ─── Par activité ─────────────────────────────────── */}
         <TabsContent value="activites">

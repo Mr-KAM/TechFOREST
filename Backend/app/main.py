@@ -14,7 +14,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import get_settings
 from app.limiter import limiter
-from app.routes import auth, carto, kpi, media
+from app.routes import auth, carto, ecogardes, kpi, media
 
 settings = get_settings()
 
@@ -91,6 +91,7 @@ app.include_router(auth.router)
 app.include_router(carto.router)
 app.include_router(kpi.router)
 app.include_router(media.router)
+app.include_router(ecogardes.router)
 
 
 @app.get("/health", tags=["Health"])
