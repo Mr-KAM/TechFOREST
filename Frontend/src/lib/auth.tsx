@@ -5,7 +5,7 @@ interface AuthContextType {
   user: UserProfile | null;
   token: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<UserProfile | null>;
   setUser: (user: UserProfile | null) => void;
@@ -15,7 +15,9 @@ const AuthContext = createContext<AuthContextType>(null!);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
+  const [token, setToken] = useState<string | null>(
+    () => localStorage.getItem("token") ?? sessionStorage.getItem("token"),
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,9 +34,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [token]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe = false) => {
     const res = await apiLogin(email, password);
-    localStorage.setItem("token", res.access_token);
+    if (rememberMe) {
+      localStorage.setItem("token", res.access_token);
+      sessionStorage.removeItem("token");
+    } else {
+      sessionStorage.setItem("token", res.access_token);
+      localStorage.removeItem("token");
+    }
     setToken(res.access_token);
     const profile = await getMe();
     setUser(profile);
@@ -42,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     setToken(null);
     setUser(null);
   };

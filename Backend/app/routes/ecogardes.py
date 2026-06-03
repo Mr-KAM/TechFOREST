@@ -76,6 +76,7 @@ def _merge(eco: Ecogarde, stats: dict) -> EcogardeProfile:
         foret=eco.foret,
         telephone=eco.telephone,
         email=eco.email,
+        genre=eco.genre,
         photo_url=_photo_url(eco.photo_filename),
         date_recrutement=eco.date_recrutement,
         notes=eco.notes,

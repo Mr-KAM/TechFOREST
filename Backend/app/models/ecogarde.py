@@ -15,6 +15,7 @@ class Ecogarde(Base):
     foret = Column(String(100), nullable=True)       # "Zaranou", "Apouéba", ou null
     telephone = Column(String(50), nullable=True)
     email = Column(String(255), nullable=True)
+    genre = Column(String(10), nullable=True)   # "Homme" | "Femme"
     photo_filename = Column(String(255), nullable=True)
     date_recrutement = Column(Date, nullable=True)
     notes = Column(Text, nullable=True)

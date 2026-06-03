@@ -82,3 +82,19 @@ class PasswordChange(BaseModel):
         if len(v) < 6:
             raise ValueError("Le nouveau mot de passe doit contenir au moins 6 caractères.")
         return v
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def _check_length(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("Le mot de passe doit contenir au moins 6 caractères.")
+        return v

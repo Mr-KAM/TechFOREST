@@ -5,8 +5,10 @@ from io import BytesIO
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
 
 from app.concurrency import run_sync
+from app.database import get_db
 
 from app.models.user import User
 from app.schemas.kpi import (
@@ -116,15 +118,24 @@ async def get_global_dashboard(current_user: User = Depends(get_current_user)):
 
 
 @router.get("/public/summary")
-async def get_public_summary():
+async def get_public_summary(db: Session = Depends(get_db)):
     """
     Statistiques publiques pour la page d'accueil (aucune authentification requise).
     Retourne uniquement des totaux agrégés non sensibles.
     """
+    from app.models.ecogarde import Ecogarde as EcogardeModel
+
+    # Écogardes actifs en base (hors exclus)
+    ecogardes_actifs = (
+        db.query(EcogardeModel)
+        .filter(EcogardeModel.is_active.is_(True), EcogardeModel.is_excluded.is_(False))
+        .count()
+    )
+
     settings = get_settings()
     planting_uid = settings.kobo_form_uids.get("planting_arbre", "")
     if not planting_uid:
-        return {"trees_planted": 0}
+        return {"trees_planted": 0, "ecogardes_actifs": ecogardes_actifs}
     try:
         submissions = await _run_sync(get_form_submissions_raw, planting_uid)
         indicators = compute_form_indicators("planting_arbre", submissions)
@@ -132,9 +143,9 @@ async def get_public_summary():
             (int(i["value"]) for i in indicators if i["indicator_name"] == "Arbres plantés (déclarés)"),
             0,
         )
-        return {"trees_planted": trees}
+        return {"trees_planted": trees, "ecogardes_actifs": ecogardes_actifs}
     except Exception:
-        return {"trees_planted": 0}
+        return {"trees_planted": 0, "ecogardes_actifs": ecogardes_actifs}
 
 
 @router.get("/indicators", response_model=GlobalIndicators)

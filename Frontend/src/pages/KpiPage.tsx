@@ -5563,6 +5563,7 @@ const FORET_OPTIONS = ["Zaranou", "Apouéba"];
 const EMPTY_ENRICH: EcogardeEnrich = {
   telephone: null,
   email: null,
+  genre: null,
   is_active: true,
 };
 
@@ -5606,6 +5607,11 @@ function EcogardeCard({
               {eco.foret && (
                 <Badge className="text-[10px] bg-emerald-600/90 text-white hover:bg-emerald-600/90">
                   {eco.foret}
+                </Badge>
+              )}
+              {eco.genre && (
+                <Badge variant="outline" className={`text-[10px] ${eco.genre === "Femme" ? "border-pink-400 text-pink-600" : "border-blue-400 text-blue-600"}`}>
+                  {eco.genre}
                 </Badge>
               )}
               {!eco.is_active && (
@@ -5748,7 +5754,7 @@ function EcogardesTab({
 
   const openEdit = (eco: EcogardeProfile) => {
     setEditTarget(eco);
-    setEnrich({ telephone: eco.telephone, email: eco.email, is_active: eco.is_active });
+    setEnrich({ telephone: eco.telephone, email: eco.email, genre: eco.genre, is_active: eco.is_active });
     setPhotoFile(null);
     setPhotoPreview(eco.photo_url);
     setError(null);
@@ -6009,6 +6015,26 @@ function EcogardesTab({
                   placeholder="agent@example.com"
                   className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
+              </div>
+
+              {/* Genre */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Genre</label>
+                <Select
+                  value={enrich.genre ?? "none"}
+                  onValueChange={(v) =>
+                    setEnrich((f) => ({ ...f, genre: v === "none" ? null : v }))
+                  }
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Non renseigné" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— Non renseigné</SelectItem>
+                    <SelectItem value="Homme">Homme</SelectItem>
+                    <SelectItem value="Femme">Femme</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Statut */}

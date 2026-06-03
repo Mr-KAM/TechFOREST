@@ -8,6 +8,7 @@ import KpiPage from "@/pages/KpiPage";
 import AdminPage from "@/pages/AdminPage";
 import DataTablePage from "@/pages/DataTablePage";
 import ProfilePage from "@/pages/ProfilePage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -29,6 +30,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route
             element={
               <ProtectedRoute>

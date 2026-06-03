@@ -7,8 +7,10 @@ from app.database import get_db
 from app.limiter import limiter
 from app.models.user import User
 from app.schemas.auth import (
+    ForgotPasswordRequest,
     PasswordChange,
     ProfileUpdate,
+    ResetPasswordRequest,
     Token,
     UserCreate,
     UserRead,
@@ -19,6 +21,8 @@ from app.security import (
     ROLE_ADMIN,
     ROLE_SUPERADMIN,
     create_access_token,
+    create_password_reset_token,
+    decode_password_reset_token,
     get_current_user,
     hash_password,
     require_admin_or_above,
@@ -29,6 +33,7 @@ from app.services.email_service import (
     EmailNotConfiguredError,
     EmailSendError,
     send_credentials_email,
+    send_forgot_password_email,
     send_password_reset_email,
 )
 
@@ -276,6 +281,72 @@ def update_user(
     db.commit()
     db.refresh(user)
     return user
+
+
+_RESET_RESPONSE = {"message": "Si cet email est enregistré, un lien de réinitialisation a été envoyé."}
+
+
+@router.post("/forgot-password", status_code=200)
+@limiter.limit("5/minute")
+async def forgot_password(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    payload: ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    """Envoie un lien de réinitialisation par email.
+
+    Retourne toujours 200 pour éviter l'énumération des adresses email.
+    """
+    settings = get_settings()
+    user = db.query(User).filter(User.email == payload.email).first()
+
+    if not user or not user.is_active:
+        return _RESET_RESPONSE
+
+    if not settings.smtp_enabled:
+        logger.warning("forgot_password : SMTP non configuré, email non envoyé à %s", payload.email)
+        return _RESET_RESPONSE
+
+    token = create_password_reset_token(user.id, user.hashed_password)
+    base_url = (
+        settings.APP_PUBLIC_URL.strip()
+        or request.headers.get("origin", "").strip()
+        or ""
+    )
+    reset_url = f"{base_url}/reset-password?token={token}"
+    email = user.email
+    full_name = user.full_name
+
+    def _send() -> None:
+        try:
+            send_forgot_password_email(email, full_name, reset_url)
+            logger.info("Email de réinitialisation envoyé à %s", email)
+        except (EmailNotConfiguredError, EmailSendError) as exc:
+            logger.warning("Echec envoi reset à %s : %s", email, exc)
+
+    background_tasks.add_task(_send)
+    return _RESET_RESPONSE
+
+
+@router.post("/reset-password", status_code=200)
+def reset_password(
+    payload: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    """Valide le token de réinitialisation et met à jour le mot de passe."""
+    result = decode_password_reset_token(payload.token)
+    if result is None:
+        raise HTTPException(status_code=400, detail="Lien invalide ou expiré.")
+
+    user_id, ph = result
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or not user.is_active or user.hashed_password[:8] != ph:
+        raise HTTPException(status_code=400, detail="Lien invalide ou expiré.")
+
+    user.hashed_password = hash_password(payload.new_password)
+    db.commit()
+    return {"message": "Mot de passe mis à jour avec succès."}
 
 
 def _generate_random_password(length: int = 14) -> str:

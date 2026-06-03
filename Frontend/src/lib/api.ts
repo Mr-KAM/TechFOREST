@@ -1,5 +1,9 @@
 const API_BASE = "/api";
 
+function getToken(): string | null {
+  return localStorage.getItem("token") ?? sessionStorage.getItem("token");
+}
+
 /**
  * Ajoute le JWT en query string à une URL servie par notre backend
  * (utile pour les balises <img> qui ne peuvent pas envoyer d'en-tête
@@ -7,14 +11,14 @@ const API_BASE = "/api";
  */
 export function withAuthQuery(url: string | null | undefined): string {
   if (!url) return "";
-  const token = localStorage.getItem("token");
+  const token = getToken();
   if (!token) return url;
   const sep = url.includes("?") ? "&" : "?";
   return `${url}${sep}token=${encodeURIComponent(token)}`;
 }
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem("token");
+  const token = getToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...((options.headers as Record<string, string>) || {}),
@@ -27,6 +31,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   if (res.status === 401) {
     localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     window.location.href = "/login";
     throw new Error("Non authentifié");
   }
@@ -74,6 +79,20 @@ export function getMe(): Promise<UserProfile> {
   return request("/auth/me");
 }
 
+export function forgotPassword(email: string): Promise<{ message: string }> {
+  return request("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function resetPassword(token: string, new_password: string): Promise<{ message: string }> {
+  return request("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, new_password }),
+  });
+}
+
 // ─── Profil utilisateur ─────────────────────────────────────
 
 export interface ProfileUpdate {
@@ -94,7 +113,7 @@ export function updateMyProfile(payload: ProfileUpdate): Promise<UserProfile> {
 }
 
 export async function changeMyPassword(payload: PasswordChange): Promise<void> {
-  const token = localStorage.getItem("token");
+  const token = getToken();
   const res = await fetch(`${API_BASE}/auth/me/password`, {
     method: "POST",
     headers: {
@@ -105,6 +124,7 @@ export async function changeMyPassword(payload: PasswordChange): Promise<void> {
   });
   if (res.status === 401) {
     localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     window.location.href = "/login";
     throw new Error("Non authentifié");
   }
@@ -751,6 +771,7 @@ export interface EcogardeProfile {
   foret: string | null;
   telephone: string | null;
   email: string | null;
+  genre: string | null;
   photo_url: string | null;
   date_recrutement: string | null;
   notes: string | null;
@@ -768,6 +789,7 @@ export interface EcogardeProfile {
 export interface EcogardeEnrich {
   telephone?: string | null;
   email?: string | null;
+  genre?: string | null;
   is_active?: boolean;
 }
 
@@ -867,6 +889,7 @@ export function getTeamMissions(): Promise<TeamMissionsResponse> {
 
 export interface PublicSummary {
   trees_planted: number;
+  ecogardes_actifs: number;
 }
 
 /** Endpoint public (sans auth) pour la page d'accueil. */

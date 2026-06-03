@@ -212,6 +212,51 @@ def send_password_reset_email(
     send_email(to_email, subject, html_body, text_body)
 
 
+def send_forgot_password_email(to_email: str, full_name: str, reset_url: str) -> None:
+    """Envoie un lien de réinitialisation de mot de passe à l'utilisateur."""
+    safe_name = (full_name or "").strip() or to_email
+    url = (reset_url or "").strip()
+
+    subject = "Réinitialisation de votre mot de passe TechFOREST"
+    text_body = (
+        f"Bonjour {safe_name},\n\n"
+        "Vous avez demandé à réinitialiser le mot de passe de votre compte TechFOREST.\n\n"
+        "Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe :\n"
+        f"  {url}\n\n"
+        "Ce lien est valable 1 heure. Après ce délai, vous devrez renouveler votre demande.\n\n"
+        "Si vous n'êtes pas à l'origine de cette demande, ignorez simplement cet email.\n\n"
+        "— L'équipe TechFOREST"
+    )
+    html_body = f"""\
+<!doctype html>
+<html lang="fr">
+  <body style="font-family: Arial, sans-serif; color:#111; line-height:1.5;">
+    <p>Bonjour <strong>{_escape(safe_name)}</strong>,</p>
+    <p>Vous avez demandé à réinitialiser le mot de passe de votre compte
+       <strong>TechFOREST</strong>.</p>
+    <p>Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe :</p>
+    <p style="margin: 24px 0;">
+      <a href="{_escape(url)}"
+         style="display:inline-block;padding:12px 22px;background:#16a34a;
+                color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">
+        Réinitialiser mon mot de passe
+      </a>
+    </p>
+    <p style="color:#555;font-size:0.9em;">
+      Ce lien est valable <strong>1 heure</strong>. Après ce délai, vous devrez
+      renouveler votre demande.
+    </p>
+    <p style="color:#555;font-size:0.9em;">
+      Si vous n'êtes pas à l'origine de cette demande, ignorez simplement cet email —
+      votre mot de passe ne sera pas modifié.
+    </p>
+    <p style="color:#555;font-size:0.9em;">— L'équipe TechFOREST</p>
+  </body>
+</html>
+"""
+    send_email(to_email, subject, html_body, text_body)
+
+
 def _escape(value: str) -> str:
     """Échappement HTML minimal pour les valeurs insérées dans le template."""
     return (

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone  # noqa: F401 (timedelta re-exported)
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -95,6 +95,31 @@ def require_superadmin(current_user=Depends(get_current_user)):
             detail="Accès réservé au superadministrateur",
         )
     return current_user
+
+
+def create_password_reset_token(user_id: int, password_hash: str) -> str:
+    """JWT de réinitialisation de mot de passe (1 h). Invalidé si le mot de passe change."""
+    data = {
+        "sub": str(user_id),
+        "purpose": "password_reset",
+        "ph": password_hash[:8],
+    }
+    return create_access_token(data, expires_delta=timedelta(hours=1))
+
+
+def decode_password_reset_token(token: str) -> tuple[int, str] | None:
+    """Décode le JWT reset. Retourne (user_id, ph) ou None si invalide/expiré."""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("purpose") != "password_reset":
+            return None
+        user_id = payload.get("sub")
+        ph = payload.get("ph")
+        if not user_id or not ph:
+            return None
+        return int(user_id), str(ph)
+    except JWTError:
+        return None
 
 
 def require_admin_or_above(current_user=Depends(get_current_user)):

@@ -23,10 +23,11 @@ class EcogardeCreate(BaseModel):
 
 
 class EcogardeEnrich(BaseModel):
-    """Champs modifiables par admin/superadmin : contact et statut uniquement."""
+    """Champs modifiables par admin/superadmin : contact, genre et statut."""
 
     telephone: str | None = None
     email: str | None = None
+    genre: str | None = None
     is_active: bool | None = None
 
 
@@ -40,6 +41,7 @@ class EcogardeProfile(BaseModel):
     foret: str | None
     telephone: str | None
     email: str | None = None
+    genre: str | None = None
     photo_url: str | None = None
     date_recrutement: date | None
     notes: str | None

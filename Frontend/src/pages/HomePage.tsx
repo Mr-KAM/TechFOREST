@@ -24,7 +24,6 @@ import {
 
 const STATIC_STATS = [
   { label: "Forêts suivies", value: "2", icon: Map },
-  { label: "Echo-garde impliqué", value: "5", icon: Shield },
 ];
 
 const FEATURES = [
@@ -56,6 +55,7 @@ export default function HomePage() {
   const { resolved, setTheme } = useTheme();
   const [totalArea, setTotalArea] = useState<number | null>(null);
   const [treesPlanted, setTreesPlanted] = useState<number | null>(null);
+  const [ecogardesActifs, setEcogardesActifs] = useState<number | null>(null);
   const [videos, setVideos] = useState<Record<string, MediaVideo>>({});
 
   // Construit une URL avec cache-buster basé sur la date de mise à jour
@@ -85,10 +85,16 @@ export default function HomePage() {
     const loadSummary = () => {
       getPublicSummary()
         .then((s) => {
-          if (!cancelled) setTreesPlanted(s.trees_planted);
+          if (!cancelled) {
+            setTreesPlanted(s.trees_planted);
+            setEcogardesActifs(s.ecogardes_actifs);
+          }
         })
         .catch(() => {
-          if (!cancelled) setTreesPlanted(0);
+          if (!cancelled) {
+            setTreesPlanted(0);
+            setEcogardesActifs(0);
+          }
         });
     };
 
@@ -133,7 +139,11 @@ export default function HomePage() {
     STATIC_STATS[0],
     { label: "Superficie suivie", value: areaLabel, icon: Trees },
     { label: "Arbres reboisés", value: treesLabel, icon: Sprout },
-    STATIC_STATS[1],
+    {
+      label: "Écogardes actifs",
+      value: ecogardesActifs === null ? "…" : ecogardesActifs.toString(),
+      icon: Shield,
+    },
   ];
 
   return (
