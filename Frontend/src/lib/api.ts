@@ -750,6 +750,8 @@ export interface EcogardeProfile {
   code_kobo: string;
   foret: string | null;
   telephone: string | null;
+  email: string | null;
+  photo_url: string | null;
   date_recrutement: string | null;
   notes: string | null;
   is_active: boolean;
@@ -761,6 +763,12 @@ export interface EcogardeProfile {
   forms_covered: number;
   by_form: Record<string, number>;
   derniere_mission: string | null;
+}
+
+export interface EcogardeEnrich {
+  telephone?: string | null;
+  email?: string | null;
+  is_active?: boolean;
 }
 
 export interface EcogardesListResponse {
@@ -787,12 +795,29 @@ export function createEcogarde(data: EcogardeCreate): Promise<EcogardeProfile> {
   return request("/ecogardes", { method: "POST", body: JSON.stringify(data) });
 }
 
-export function updateEcogarde(id: number, data: Partial<EcogardeCreate & { is_active: boolean }>): Promise<EcogardeProfile> {
+export function updateEcogarde(id: number, data: EcogardeEnrich): Promise<EcogardeProfile> {
   return request(`/ecogardes/${id}`, { method: "PATCH", body: JSON.stringify(data) });
 }
 
 export function deleteEcogarde(id: number): Promise<void> {
   return request(`/ecogardes/${id}`, { method: "DELETE" });
+}
+
+export function uploadEcogardePhoto(id: number, file: File): Promise<EcogardeProfile> {
+  const token = localStorage.getItem("token");
+  const form = new FormData();
+  form.append("file", file);
+  return fetch(`${API_BASE}/ecogardes/${id}/photo`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  }).then(async (res) => {
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(body.detail || `Erreur ${res.status}`);
+    }
+    return res.json();
+  });
 }
 
 export interface EcogardeInTeam {

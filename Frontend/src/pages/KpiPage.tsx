@@ -14,9 +14,9 @@ import {
   getFauneBreakdowns,
   getMenacesBreakdowns,
   listEcogardes,
-  createEcogarde,
   updateEcogarde,
   deleteEcogarde,
+  uploadEcogardePhoto,
   withAuthQuery,
   type SubmissionLocation,
   type TimelineEntry,
@@ -25,7 +25,7 @@ import {
   type GlobalIndicators,
   type EcogardeProfile,
   type EcogardesListResponse,
-  type EcogardeCreate,
+  type EcogardeEnrich,
   type TeamsResponse,
   type TeamStats,
   type TeamMissionsResponse,
@@ -116,10 +116,10 @@ import {
   CalendarCheck,
   UserCheck,
   TreeDeciduous,
-  UserPlus,
   Pencil,
   Trash2,
   Phone,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth, ROLES, isAdmin } from "@/lib/auth";
@@ -5560,14 +5560,9 @@ function TeamMissionsTable({ data }: { data: TeamMissionsResponse | null }) {
 
 const FORET_OPTIONS = ["Zaranou", "Apouéba"];
 
-const EMPTY_FORM: EcogardeCreate = {
-  nom: "",
-  prenom: "",
-  code_kobo: "",
-  foret: null,
+const EMPTY_ENRICH: EcogardeEnrich = {
   telephone: null,
-  date_recrutement: null,
-  notes: null,
+  email: null,
   is_active: true,
 };
 
@@ -5588,8 +5583,17 @@ function EcogardeCard({
       <CardContent className="p-4 flex flex-col gap-3">
         {/* En-tête : avatar + identité + actions */}
         <div className="flex items-start gap-3">
-          <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0 text-sm font-bold text-primary select-none">
-            {initials}
+          {/* Avatar : photo ou initiales */}
+          <div className="h-12 w-12 rounded-full shrink-0 overflow-hidden bg-primary/15 flex items-center justify-center text-sm font-bold text-primary select-none border border-border">
+            {eco.photo_url ? (
+              <img
+                src={eco.photo_url}
+                alt={`${eco.prenom} ${eco.nom}`}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              initials
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <div className="font-semibold text-sm leading-snug">
@@ -5689,6 +5693,12 @@ function EcogardeCard({
               {eco.telephone}
             </div>
           )}
+          {eco.email && (
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Mail className="h-3 w-3 shrink-0" />
+              {eco.email}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -5712,7 +5722,9 @@ function EcogardesTab({
 
   const [showModal, setShowModal] = useState(false);
   const [editTarget, setEditTarget] = useState<EcogardeProfile | null>(null);
-  const [form, setForm] = useState<EcogardeCreate>(EMPTY_FORM);
+  const [enrich, setEnrich] = useState<EcogardeEnrich>(EMPTY_ENRICH);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [filterForet, setFilterForet] = useState("all");
@@ -5734,29 +5746,21 @@ function EcogardesTab({
     if (!initialProfiles) refresh();
   }, []);
 
-  const openCreate = () => {
-    setEditTarget(null);
-    setForm(EMPTY_FORM);
+  const openEdit = (eco: EcogardeProfile) => {
+    setEditTarget(eco);
+    setEnrich({ telephone: eco.telephone, email: eco.email, is_active: eco.is_active });
+    setPhotoFile(null);
+    setPhotoPreview(eco.photo_url);
     setError(null);
     setInfo(null);
     setShowModal(true);
   };
 
-  const openEdit = (eco: EcogardeProfile) => {
-    setEditTarget(eco);
-    setForm({
-      nom: eco.nom,
-      prenom: eco.prenom,
-      code_kobo: eco.code_kobo,
-      foret: eco.foret,
-      telephone: eco.telephone,
-      date_recrutement: eco.date_recrutement,
-      notes: eco.notes,
-      is_active: eco.is_active,
-    });
-    setError(null);
-    setInfo(null);
-    setShowModal(true);
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
   };
 
   const handleDelete = async (eco: EcogardeProfile) => {
@@ -5773,16 +5777,15 @@ function EcogardesTab({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editTarget) return;
     setSubmitting(true);
     setError(null);
     try {
-      if (editTarget) {
-        await updateEcogarde(editTarget.id, form);
-        setInfo(`Profil mis à jour : ${form.prenom} ${form.nom}`);
-      } else {
-        await createEcogarde(form);
-        setInfo(`Écogarde créé : ${form.prenom} ${form.nom}`);
+      if (photoFile) {
+        await uploadEcogardePhoto(editTarget.id, photoFile);
       }
+      await updateEcogarde(editTarget.id, enrich);
+      setInfo(`Profil mis à jour : ${editTarget.prenom} ${editTarget.nom}`);
       setShowModal(false);
       await refresh();
     } catch (e) {
@@ -5810,6 +5813,10 @@ function EcogardesTab({
 
   const totalMissions = filtered.reduce((s, p) => s + p.total_missions, 0);
   const totalObs = filtered.reduce((s, p) => s + p.total_submissions, 0);
+
+  const initials = editTarget
+    ? `${editTarget.prenom[0] ?? ""}${editTarget.nom[0] ?? ""}`.toUpperCase()
+    : "";
 
   return (
     <div className="space-y-4">
@@ -5848,12 +5855,6 @@ function EcogardesTab({
             </SelectContent>
           </Select>
         </div>
-        {isAdmin && (
-          <Button size="sm" onClick={openCreate} className="gap-1.5">
-            <UserPlus className="h-4 w-4" />
-            Ajouter un écogarde
-          </Button>
-        )}
       </div>
 
       {/* Notifications */}
@@ -5908,7 +5909,7 @@ function EcogardesTab({
         <Card>
           <CardContent className="py-14 text-center text-sm text-muted-foreground">
             {profiles.length === 0
-              ? "Aucun écogarde enregistré. Cliquez sur « Ajouter un écogarde » pour commencer."
+              ? "Aucun écogarde détecté. Les profils apparaissent automatiquement dès qu'un agent soumet des données dans KoboToolbox."
               : "Aucun profil ne correspond aux filtres sélectionnés."}
           </CardContent>
         </Card>
@@ -5926,18 +5927,18 @@ function EcogardesTab({
         </div>
       )}
 
-      {/* Modal de création / édition */}
-      {showModal && (
+      {/* Modal d'enrichissement (photo + contact) */}
+      {showModal && editTarget && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowModal(false);
           }}
         >
-          <div className="bg-background rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="bg-background rounded-xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <h2 className="text-base font-semibold">
-                {editTarget ? "Modifier l'écogarde" : "Nouvel écogarde"}
+                {editTarget.prenom} <span className="uppercase">{editTarget.nom}</span>
               </h2>
               <Button
                 size="icon"
@@ -5948,117 +5949,80 @@ function EcogardesTab({
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">Prénom *</label>
-                  <input
-                    required
-                    value={form.prenom}
-                    onChange={(e) => setForm((f) => ({ ...f, prenom: e.target.value }))}
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
+            <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
+
+              {/* Photo de profil */}
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-20 w-20 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center text-xl font-bold text-primary border border-border">
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="aperçu" className="h-full w-full object-cover" />
+                  ) : (
+                    initials
+                  )}
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">Nom *</label>
+                <label className="cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors">
+                    <Camera className="h-3.5 w-3.5" />
+                    {photoPreview ? "Changer la photo" : "Ajouter une photo"}
+                  </span>
                   <input
-                    required
-                    value={form.nom}
-                    onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))}
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={handlePhotoChange}
                   />
-                </div>
+                </label>
+                <p className="text-[10px] text-muted-foreground">jpeg / png / webp · max 5 Mo</p>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-medium">
-                  Code Kobo *{" "}
-                  <span className="text-muted-foreground font-normal">
-                    (identifiant dans les soumissions Kobo)
-                  </span>
+              <Separator />
+
+              {/* Téléphone */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                  Téléphone
                 </label>
                 <input
-                  required
-                  value={form.code_kobo}
-                  onChange={(e) => setForm((f) => ({ ...f, code_kobo: e.target.value }))}
-                  placeholder="ex: dupont_jean ou jean.dupont"
-                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">Forêt</label>
-                  <Select
-                    value={form.foret ?? "none"}
-                    onValueChange={(v) =>
-                      setForm((f) => ({ ...f, foret: v === "none" ? null : v }))
-                    }
-                  >
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue placeholder="Toutes forêts" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">— Toutes</SelectItem>
-                      {FORET_OPTIONS.map((f) => (
-                        <SelectItem key={f} value={f}>{f}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">Téléphone</label>
-                  <input
-                    type="tel"
-                    value={form.telephone ?? ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, telephone: e.target.value || null }))
-                    }
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium">Date de recrutement</label>
-                <input
-                  type="date"
-                  value={form.date_recrutement ?? ""}
+                  type="tel"
+                  value={enrich.telephone ?? ""}
                   onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      date_recrutement: e.target.value || null,
-                    }))
+                    setEnrich((f) => ({ ...f, telephone: e.target.value || null }))
                   }
+                  placeholder="+225 07 00 00 00 00"
                   className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-medium">Notes</label>
-                <textarea
-                  rows={3}
-                  value={form.notes ?? ""}
+              {/* Email */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={enrich.email ?? ""}
                   onChange={(e) =>
-                    setForm((f) => ({ ...f, notes: e.target.value || null }))
+                    setEnrich((f) => ({ ...f, email: e.target.value || null }))
                   }
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                  placeholder="agent@example.com"
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
 
-              {editTarget && (
-                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={form.is_active ?? true}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, is_active: e.target.checked }))
-                    }
-                    className="h-4 w-4"
-                  />
-                  Actif
-                </label>
-              )}
+              {/* Statut */}
+              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={enrich.is_active ?? true}
+                  onChange={(e) =>
+                    setEnrich((f) => ({ ...f, is_active: e.target.checked }))
+                  }
+                  className="h-4 w-4"
+                />
+                Écogarde actif
+              </label>
 
               {error && (
                 <div className="rounded-md bg-destructive/10 border border-destructive/30 px-3 py-2 text-xs text-destructive">
@@ -6079,7 +6043,7 @@ function EcogardesTab({
                 <Button type="submit" size="sm" disabled={submitting}>
                   {submitting ? (
                     <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Enregistrement…</>
-                  ) : editTarget ? "Mettre à jour" : "Créer"}
+                  ) : "Enregistrer"}
                 </Button>
               </div>
             </form>

@@ -14,8 +14,12 @@ class Ecogarde(Base):
     code_kobo = Column(String(255), unique=True, nullable=False, index=True)
     foret = Column(String(100), nullable=True)       # "Zaranou", "Apouéba", ou null
     telephone = Column(String(50), nullable=True)
+    email = Column(String(255), nullable=True)
+    photo_filename = Column(String(255), nullable=True)
     date_recrutement = Column(Date, nullable=True)
     notes = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True, server_default="true")
+    # Exclu de la liste (tombstone) : reste en DB pour bloquer l'auto-sync
+    is_excluded = Column(Boolean, default=False, server_default="false")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

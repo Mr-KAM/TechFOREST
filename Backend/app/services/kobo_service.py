@@ -1765,9 +1765,47 @@ _ECOGARDE_FIELD_HINTS: tuple[str, ...] = (
     "nom_garde",
 )
 
+# Chemins pour extraire les membres de mission selon les différentes structures
+# de formulaire. Tous les chemins sont vérifiés et leurs tokens cumulés.
+_MEMBRES_PATHS: tuple[str, ...] = (
+    "metadonnees_collecte/membres_mission",
+    "equipe_collecte/membres_mission",
+    "metadonnees_collecte/equipe_collecte/membres_mission",
+    "membres_mission",
+)
+_RESP_PATHS: tuple[str, ...] = (
+    "metadonnees_collecte/responsable_mission",
+    "equipe_collecte/responsable_mission",
+    "metadonnees_collecte/equipe_collecte/responsable_mission",
+    "responsable_mission",
+)
+
+
+def _extract_mission_members(submission: dict) -> set[str]:
+    """Extrait tous les membres d'une mission depuis les champs membres_mission
+    et responsable_mission, couvrant les différentes structures de formulaire."""
+    members: set[str] = set()
+    for path in _MEMBRES_PATHS:
+        val = submission.get(path)
+        if val:
+            for token in _split_tokens(str(val)):
+                t = token.strip().lower()
+                if t and t not in ("anonyme", ""):
+                    members.add(t)
+    for path in _RESP_PATHS:
+        val = submission.get(path)
+        if isinstance(val, str) and val.strip():
+            for token in _split_tokens(val):
+                t = token.strip().lower()
+                if t and t not in ("anonyme", ""):
+                    members.add(t)
+    return members
+
 
 def _resolve_ecogarde(submission: dict) -> str:
-    """Retourne le nom/username de l'écogarde pour une soumission Kobo."""
+    """Retourne le nom/username de l'écogarde pour une soumission Kobo.
+    Utilisé pour les statistiques d'équipe (team stats).
+    """
     # 1) Champ Kobo standard : username de l'utilisateur qui a soumis.
     submitted_by = submission.get("_submitted_by")
     if isinstance(submitted_by, str) and submitted_by.strip():
@@ -1802,13 +1840,18 @@ def compute_ecogarde_stats(
     """
     Agrège les statistiques par écogarde sur l'ensemble des formulaires.
 
+    Identifie les écogardes à partir des champs membres_mission et
+    responsable_mission (les agents terrain réels) plutôt que via _submitted_by
+    (la personne qui a soumis le formulaire en ligne).
+
     forms_with_submissions : liste de tuples (form_key, form_name, submissions).
 
     Retourne, par écogarde :
-    - total_submissions : nombre total de soumissions
-    - total_missions : nombre de jours distincts d'intervention sur le terrain
-    - forms_covered : nombre de formulaires (activités) auxquels il a participé
-    - by_form : { form_key: nombre de soumissions sur ce formulaire }
+    - total_submissions : nombre de missions auxquelles cet écogarde a participé
+    - total_missions    : nombre de jours distincts d'intervention
+    - forms_covered     : nombre de formulaires (activités) auxquels il a participé
+    - by_form           : { form_key: nombre de participations sur ce formulaire }
+    - foret             : forêt principale déduite des soumissions (ou None)
     """
     from collections import defaultdict
 
@@ -1818,29 +1861,46 @@ def compute_ecogarde_stats(
             "mission_days": set(),
             "by_form": defaultdict(int),
             "forms_covered": set(),
+            "forets": defaultdict(int),
         }
     )
 
     for form_key, _form_name, submissions in forms_with_submissions:
         for sub in submissions:
-            ecogarde = _resolve_ecogarde(sub)
-            entry = stats[ecogarde]
-            entry["total_submissions"] += 1
-            entry["by_form"][form_key] += 1
-            entry["forms_covered"].add(form_key)
+            members = _extract_mission_members(sub)
+
+            # Fallback vers _submitted_by si aucun membre déclaré
+            if not members:
+                submitted_by = (sub.get("_submitted_by") or "").strip().lower()
+                if submitted_by and submitted_by != "anonyme":
+                    members = {submitted_by}
+
+            if not members:
+                continue
+
             submitted_at = (
                 sub.get("_submission_time")
                 or sub.get("end")
                 or sub.get("start")
             )
-            if submitted_at:
-                day = str(submitted_at)[:10]  # YYYY-MM-DD
+            day = str(submitted_at)[:10] if submitted_at else None
+            foret = _resolve_forest(form_key, sub)
+
+            for member in members:
+                entry = stats[member]
+                entry["total_submissions"] += 1
+                entry["by_form"][form_key] += 1
+                entry["forms_covered"].add(form_key)
                 if day:
                     entry["mission_days"].add(day)
+                if foret:
+                    entry["forets"][foret] += 1
 
     result: list[dict] = []
     for username, e in stats.items():
         days = e["mission_days"]
+        forets: dict = e["forets"]
+        foret_principal = max(forets, key=forets.__getitem__) if forets else None
         result.append(
             {
                 "username": username,
@@ -1849,6 +1909,7 @@ def compute_ecogarde_stats(
                 "forms_covered": len(e["forms_covered"]),
                 "by_form": dict(e["by_form"]),
                 "derniere_mission": max(days) if days else None,
+                "foret": foret_principal,
             }
         )
     result.sort(key=lambda x: x["total_submissions"], reverse=True)

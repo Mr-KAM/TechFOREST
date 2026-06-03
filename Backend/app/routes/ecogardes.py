@@ -1,14 +1,17 @@
 """Routes de gestion des profils Écogardes.
 
 Chaque écogarde a un profil en base de données (nom, prénom, code_kobo, etc.)
-Le champ code_kobo correspond à l'identifiant utilisé dans les soumissions KoboToolbox
-(_submitted_by ou champ métier). L'endpoint GET enrichit chaque profil avec les
-statistiques calculées à la volée depuis KoboToolbox.
+Le GET /api/ecogardes fusionne les profils DB avec les utilisateurs Kobo
+non encore enregistrés : tout soumettant Kobo apparaît automatiquement sous
+forme de carte. Les admins peuvent ensuite enrichir chaque profil avec une
+photo, un numéro de téléphone et un email.
 """
 
 import asyncio
+import logging
+from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.concurrency import run_sync
@@ -18,10 +21,10 @@ from app.models.ecogarde import Ecogarde
 from app.models.user import User
 from app.schemas.ecogarde import (
     EcogardeCreate,
+    EcogardeEnrich,
     EcogardeProfile,
     EcogardesListResponse,
     EcogardeSuggestion,
-    EcogardeUpdate,
 )
 from app.security import get_current_user, require_admin_or_above
 from app.services.kobo_service import (
@@ -30,7 +33,12 @@ from app.services.kobo_service import (
     get_form_submissions_raw,
 )
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/ecogardes", tags=["Écogardes"])
+
+_UPLOADS_DIR = Path(__file__).resolve().parent.parent.parent / "uploads" / "ecogardes"
+_ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp"}
 
 
 async def _fetch_kobo_stats() -> dict[str, dict]:
@@ -53,6 +61,12 @@ async def _fetch_kobo_stats() -> dict[str, dict]:
     return {e["username"]: e for e in raw}
 
 
+def _photo_url(filename: str | None) -> str | None:
+    if not filename:
+        return None
+    return f"/uploads/ecogardes/{filename}"
+
+
 def _merge(eco: Ecogarde, stats: dict) -> EcogardeProfile:
     return EcogardeProfile(
         id=eco.id,
@@ -61,6 +75,8 @@ def _merge(eco: Ecogarde, stats: dict) -> EcogardeProfile:
         code_kobo=eco.code_kobo,
         foret=eco.foret,
         telephone=eco.telephone,
+        email=eco.email,
+        photo_url=_photo_url(eco.photo_filename),
         date_recrutement=eco.date_recrutement,
         notes=eco.notes,
         is_active=eco.is_active,
@@ -79,8 +95,6 @@ def _parse_kobo_username(username: str) -> tuple[str, str]:
 
     "kouame_konan"   → ("Kouame", "Konan")
     "jean.dupont"    → ("Jean", "Dupont")
-    "j_dupont_bis"   → ("J", "Dupont Bis")
-    "jdupont"        → ("", "Jdupont")
     """
     import re
 
@@ -97,11 +111,7 @@ async def get_suggestions(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Retourne les usernames Kobo actifs non encore enregistrés en DB.
-
-    Utile pour pré-remplir l'ajout d'écogardes depuis la liste réelle des
-    agents détectés dans les soumissions KoboToolbox.
-    """
+    """Retourne les usernames Kobo actifs non encore enregistrés en DB."""
     kobo_stats = await _fetch_kobo_stats()
     registered = {eco.code_kobo for eco in db.query(Ecogarde.code_kobo).all()}
 
@@ -132,9 +142,28 @@ async def list_ecogardes(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Liste tous les écogardes enregistrés, enrichis de leurs statistiques Kobo."""
-    ecogardes = db.query(Ecogarde).order_by(Ecogarde.nom, Ecogarde.prenom).all()
+    """Liste tous les écogardes.
+
+    Fusionne les profils DB avec les utilisateurs Kobo non encore enregistrés :
+    tout soumettant Kobo obtient automatiquement une carte.
+    """
     kobo_stats = await _fetch_kobo_stats()
+
+    # Auto-créer les entrées DB pour les membres de mission absents
+    registered_codes = {eco.code_kobo for eco in db.query(Ecogarde.code_kobo).all()}
+    new_count = 0
+    for username, stats in kobo_stats.items():
+        if username in registered_codes or username == "anonyme":
+            continue
+        prenom, nom = _parse_kobo_username(username)
+        foret = stats.get("foret")  # forêt principale déduite des missions
+        db.add(Ecogarde(nom=nom, prenom=prenom, code_kobo=username, foret=foret))
+        new_count += 1
+    if new_count:
+        db.commit()
+        logger.info("Auto-création de %d écogarde(s) depuis Kobo", new_count)
+
+    ecogardes = db.query(Ecogarde).order_by(Ecogarde.nom, Ecogarde.prenom).all()
     profiles = [_merge(eco, kobo_stats.get(eco.code_kobo, {})) for eco in ecogardes]
     return EcogardesListResponse(total=len(profiles), ecogardes=profiles)
 
@@ -145,7 +174,7 @@ def create_ecogarde(
     current_user: User = Depends(require_admin_or_above),
     db: Session = Depends(get_db),
 ):
-    """Crée un nouveau profil écogarde (admin et superadmin uniquement)."""
+    """Crée manuellement un profil écogarde (admin et superadmin uniquement)."""
     if db.query(Ecogarde).filter(Ecogarde.code_kobo == data.code_kobo).first():
         raise HTTPException(
             status_code=409,
@@ -159,26 +188,56 @@ def create_ecogarde(
 
 
 @router.patch("/{ecogarde_id}", response_model=EcogardeProfile)
-def update_ecogarde(
+def enrich_ecogarde(
     ecogarde_id: int,
-    data: EcogardeUpdate,
+    data: EcogardeEnrich,
     current_user: User = Depends(require_admin_or_above),
     db: Session = Depends(get_db),
 ):
-    """Met à jour un profil écogarde (admin et superadmin uniquement)."""
+    """Met à jour les informations complémentaires d'un écogarde
+    (téléphone, email, statut actif). Photo via POST /{id}/photo.
+    """
     eco = db.query(Ecogarde).filter(Ecogarde.id == ecogarde_id).first()
     if not eco:
         raise HTTPException(status_code=404, detail="Écogarde non trouvé")
-    updates = data.model_dump(exclude_unset=True)
-    new_code = updates.get("code_kobo")
-    if new_code and new_code != eco.code_kobo:
-        if db.query(Ecogarde).filter(Ecogarde.code_kobo == new_code).first():
-            raise HTTPException(
-                status_code=409,
-                detail=f"Le code Kobo '{new_code}' est déjà utilisé par un autre écogarde.",
-            )
-    for k, v in updates.items():
+    for k, v in data.model_dump(exclude_unset=True).items():
         setattr(eco, k, v)
+    db.commit()
+    db.refresh(eco)
+    return _merge(eco, {})
+
+
+@router.post("/{ecogarde_id}/photo", response_model=EcogardeProfile)
+async def upload_photo(
+    ecogarde_id: int,
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_admin_or_above),
+    db: Session = Depends(get_db),
+):
+    """Téléverse une photo de profil pour un écogarde (jpeg / png / webp, max 5 Mo)."""
+    eco = db.query(Ecogarde).filter(Ecogarde.id == ecogarde_id).first()
+    if not eco:
+        raise HTTPException(status_code=404, detail="Écogarde non trouvé")
+
+    if file.content_type not in _ALLOWED_MIME:
+        raise HTTPException(
+            status_code=400,
+            detail="Format non supporté. Utilisez jpeg, png ou webp.",
+        )
+
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Fichier trop volumineux (max 5 Mo).")
+
+    ext = (file.filename or "photo").rsplit(".", 1)[-1].lower()
+    if ext not in ("jpg", "jpeg", "png", "webp"):
+        ext = "jpg"
+
+    _UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    filename = f"{ecogarde_id}.{ext}"
+    (_UPLOADS_DIR / filename).write_bytes(content)
+
+    eco.photo_filename = filename
     db.commit()
     db.refresh(eco)
     return _merge(eco, {})
@@ -194,5 +253,10 @@ def delete_ecogarde(
     eco = db.query(Ecogarde).filter(Ecogarde.id == ecogarde_id).first()
     if not eco:
         raise HTTPException(status_code=404, detail="Écogarde non trouvé")
+    # Supprimer la photo associée si elle existe
+    if eco.photo_filename:
+        photo_path = _UPLOADS_DIR / eco.photo_filename
+        if photo_path.exists():
+            photo_path.unlink(missing_ok=True)
     db.delete(eco)
     db.commit()

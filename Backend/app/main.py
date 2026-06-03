@@ -95,6 +95,11 @@ def health_check():
     return {"status": "healthy"}
 
 
+# ─── Uploads (photos écogardes, etc.) ────────────────────────────
+_UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
+_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=_UPLOADS_DIR), name="uploads")
+
 # ─── Frontend statique (build Vite) ────────────────────────────
 _STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 if _STATIC_DIR.is_dir():

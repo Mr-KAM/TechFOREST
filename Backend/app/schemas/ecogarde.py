@@ -9,6 +9,7 @@ class EcogardeCreate(BaseModel):
     code_kobo: str
     foret: str | None = None
     telephone: str | None = None
+    email: str | None = None
     date_recrutement: date | None = None
     notes: str | None = None
     is_active: bool = True
@@ -21,14 +22,11 @@ class EcogardeCreate(BaseModel):
         return v.strip()
 
 
-class EcogardeUpdate(BaseModel):
-    nom: str | None = None
-    prenom: str | None = None
-    code_kobo: str | None = None
-    foret: str | None = None
+class EcogardeEnrich(BaseModel):
+    """Champs modifiables par admin/superadmin : contact et statut uniquement."""
+
     telephone: str | None = None
-    date_recrutement: date | None = None
-    notes: str | None = None
+    email: str | None = None
     is_active: bool | None = None
 
 
@@ -41,6 +39,8 @@ class EcogardeProfile(BaseModel):
     code_kobo: str
     foret: str | None
     telephone: str | None
+    email: str | None = None
+    photo_url: str | None = None
     date_recrutement: date | None
     notes: str | None
     is_active: bool
