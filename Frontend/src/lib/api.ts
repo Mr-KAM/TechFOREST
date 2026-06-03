@@ -52,6 +52,7 @@ export interface UserProfile {
   full_name: string;
   role: string;
   is_active: boolean;
+  created_at?: string;
 }
 
 export function login(email: string, password: string): Promise<LoginResponse> {

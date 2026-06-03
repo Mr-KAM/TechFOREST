@@ -1,6 +1,7 @@
 """TechFOREST API – Point d'entrée principal."""
 
 import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -13,6 +14,7 @@ from slowapi.errors import RateLimitExceeded
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import get_settings
+from app.database import run_migrations
 from app.limiter import limiter
 from app.routes import auth, carto, ecogardes, kpi, media
 
@@ -21,11 +23,17 @@ settings = get_settings()
 logging.basicConfig(level=logging.INFO if not settings.DEBUG else logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# ─── Rate limiter (partagé entre tous les routers) ────────────────
-# Importé depuis app.limiter pour éviter une double instanciation.
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Applique les migrations Alembic au démarrage puis cède le contrôle."""
+    run_migrations()
+    yield
+
 
 # ─── Application FastAPI ──────────────────────────────────────
 app = FastAPI(
+    lifespan=lifespan,
     title=settings.APP_NAME,
     description=(
         "API backend pour l'application SIG TechFOREST. "
@@ -37,7 +45,7 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Attacher le limiter et son handler 429 à l'app
+# ─── Rate limiter ─────────────────────────────────────────────
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -45,26 +53,16 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # ─── Handlers d'exceptions globaux ────────────────────────────
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    """Uniformise le format JSON de toutes les erreurs HTTP (404, 403, 401…)."""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail},
-    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """422 Unprocessable Entity – retourne les erreurs de validation Pydantic."""
-    return JSONResponse(
-        status_code=422,
-        content={"detail": exc.errors()},
-    )
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    """Capture toute exception non gérée, log le détail en interne, renvoie
-    un message générique au client (jamais de stack trace en production)."""
     logger.error(
         "Unhandled exception on %s %s: %s",
         request.method,
@@ -72,10 +70,8 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
         exc,
         exc_info=True,
     )
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error"},
-    )
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
 
 # ─── CORS ─────────────────────────────────────────────────────
 app.add_middleware(
@@ -100,8 +96,6 @@ def health_check():
 
 
 # ─── Frontend statique (build Vite) ────────────────────────────
-# En production, l'image Docker copie le build dans /app/static.
-# En dev local, ce repertoire peut ne pas exister : on ne monte rien.
 _STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 if _STATIC_DIR.is_dir():
     app.mount(
@@ -116,7 +110,6 @@ if _STATIC_DIR.is_dir():
 
     @app.get("/{full_path:path}", include_in_schema=False)
     def _spa_fallback(full_path: str):
-        # Laisse passer les routes API connues; sinon renvoie l'index.html (SPA).
         candidate = _STATIC_DIR / full_path
         if candidate.is_file():
             return FileResponse(candidate)

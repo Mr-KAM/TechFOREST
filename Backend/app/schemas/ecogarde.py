@@ -60,3 +60,17 @@ class EcogardeProfile(BaseModel):
 class EcogardesListResponse(BaseModel):
     total: int
     ecogardes: list[EcogardeProfile]
+
+
+class EcogardeSuggestion(BaseModel):
+    """Username Kobo actif mais sans profil DB — candidat à l'enregistrement."""
+
+    code_kobo: str
+    total_submissions: int
+    total_missions: int
+    forms_covered: int
+    by_form: dict[str, int]
+    derniere_mission: str | None = None
+    # Nom / prénom déduits heuristiquement du username
+    prenom_suggere: str
+    nom_suggere: str

@@ -5040,6 +5040,12 @@ const ACTIVITE_COLOR: Record<string, string> = {
   menaces: "#f59e0b",
 };
 
+const SITE_COLORS: Record<string, string> = {
+  "Zaranou":        "#16a34a",
+  "Apouéba":        "#0ea5e9",
+  "Non spécifiée":  "#6b7280",
+};
+
 /** Formate un nom Kobo snake_case en MAJUSCULES avec espaces : "kouame_aka_kouadio" → "KOUAME AKA KOUADIO" */
 function formatNom(raw: string): string {
   return raw.trim().replace(/_/g, " ").toUpperCase();
@@ -5113,6 +5119,48 @@ function TeamMissionsTable({ data }: { data: TeamMissionsResponse | null }) {
     .map(([name, s]) => ({ name: formatNom(name), missions: s.missions, chef: s.chef }))
     .sort((a, b) => b.missions - a.missions);
 
+  // ── Stats globales ────────────────────────────────────────────────
+  const allEcogardes = new Set<string>();
+  for (const m of filtered) {
+    m.membres.forEach((mb) => { if (mb) allEcogardes.add(mb); });
+    if (m.chef_equipe) allEcogardes.add(m.chef_equipe);
+  }
+  const uniqueEcogardes = allEcogardes.size;
+  const distinctDays = new Set(filtered.map((m) => m.date_mission).filter(Boolean)).size;
+  const totalParticipations = filtered.reduce((sum, m) => {
+    const team = new Set(m.membres.filter(Boolean));
+    if (m.chef_equipe) team.add(m.chef_equipe);
+    return sum + team.size;
+  }, 0);
+  const avgPerEcogarde =
+    uniqueEcogardes > 0 ? (totalParticipations / uniqueEcogardes).toFixed(1) : "—";
+
+  // ── Par site ─────────────────────────────────────────────────────
+  const missionsBySite: Record<string, number> = {};
+  for (const m of filtered) {
+    const site = m.foret && m.foret !== "Non spécifiée" ? m.foret : "Non spécifiée";
+    missionsBySite[site] = (missionsBySite[site] ?? 0) + 1;
+  }
+  const siteChartData = Object.entries(missionsBySite)
+    .map(([site, missions]) => ({ site, missions }))
+    .sort((a, b) => b.missions - a.missions);
+
+  // ── Par activité ─────────────────────────────────────────────────
+  const missionsByActivite: Record<string, { label: string; count: number; color: string }> = {};
+  for (const m of filtered) {
+    if (!missionsByActivite[m.activite]) {
+      missionsByActivite[m.activite] = {
+        label: m.activite_label,
+        count: 0,
+        color: ACTIVITE_COLOR[m.activite] ?? "#6b7280",
+      };
+    }
+    missionsByActivite[m.activite].count += 1;
+  }
+  const activiteChartData = Object.values(missionsByActivite)
+    .map(({ label, count, color }) => ({ activite: label, missions: count, color }))
+    .sort((a, b) => b.missions - a.missions);
+
   return (
     <div className="space-y-4">
       {/* Diagramme en barres groupées */}
@@ -5161,6 +5209,153 @@ function TeamMissionsTable({ data }: { data: TeamMissionsResponse | null }) {
           </ResponsiveContainer>
         </CardContent>
       </Card>
+
+      {/* ── Cartes KPI ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Card>
+          <CardContent className="py-3 px-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] text-muted-foreground leading-tight">Missions terrain</span>
+              <ClipboardList className="h-3.5 w-3.5 text-cyan-500 shrink-0" />
+            </div>
+            <div className="text-2xl font-bold">{filtered.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="py-3 px-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] text-muted-foreground leading-tight">Écogardes mobilisés</span>
+              <Users className="h-3.5 w-3.5 text-primary shrink-0" />
+            </div>
+            <div className="text-2xl font-bold">{uniqueEcogardes}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="py-3 px-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] text-muted-foreground leading-tight">Jours d'intervention</span>
+              <CalendarDays className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+            </div>
+            <div className="text-2xl font-bold">{distinctDays}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="py-3 px-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] text-muted-foreground leading-tight">Moy. missions / écogarde</span>
+              <TrendingUp className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+            </div>
+            <div className="text-2xl font-bold">{avgPerEcogarde}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ── Graphiques par site et par activité ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Par site */}
+        <Card>
+          <CardHeader className="pb-1 pt-4 px-4">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Missions par site
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-2 pb-3">
+            {siteChartData.length === 0 ? (
+              <div className="h-28 flex items-center justify-center text-xs text-muted-foreground">
+                Aucune donnée
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={140}>
+                <BarChart
+                  data={siteChartData}
+                  layout="vertical"
+                  margin={{ top: 0, right: 20, left: 4, bottom: 0 }}
+                  barCategoryGap="30%"
+                >
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                  <XAxis
+                    type="number"
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                    allowDecimals={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="site"
+                    tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
+                    width={88}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      fontSize: 12,
+                      background: "hsl(var(--popover))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: 6,
+                    }}
+                    formatter={(v: number) => [v, "Missions"]}
+                  />
+                  <Bar dataKey="missions" radius={[0, 3, 3, 0]}>
+                    {siteChartData.map((entry, i) => (
+                      <Cell key={i} fill={SITE_COLORS[entry.site] ?? "#6b7280"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Par activité */}
+        <Card>
+          <CardHeader className="pb-1 pt-4 px-4">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Missions par type d'activité
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-2 pb-3">
+            {activiteChartData.length === 0 ? (
+              <div className="h-28 flex items-center justify-center text-xs text-muted-foreground">
+                Aucune donnée
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={140}>
+                <BarChart
+                  data={activiteChartData}
+                  margin={{ top: 0, right: 8, left: 0, bottom: 36 }}
+                  barCategoryGap="30%"
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                  <XAxis
+                    dataKey="activite"
+                    tick={{ fontSize: 9, fill: "hsl(var(--foreground))" }}
+                    angle={-20}
+                    textAnchor="end"
+                    interval={0}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                    allowDecimals={false}
+                    width={28}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      fontSize: 12,
+                      background: "hsl(var(--popover))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: 6,
+                    }}
+                    formatter={(v: number) => [v, "Missions"]}
+                  />
+                  <Bar dataKey="missions" radius={[3, 3, 0, 0]}>
+                    {activiteChartData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Filtres */}
       <div className="flex flex-wrap gap-2 items-center">

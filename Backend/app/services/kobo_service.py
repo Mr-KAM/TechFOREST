@@ -2877,19 +2877,43 @@ _MEMBRE_FIELDS_ALL = list(_MEMBRE_FIELDS_BY_FOREST.values())
 _CHEF_FIELDS_ALL = list(_CHEF_FIELDS_BY_FOREST.values())
 
 # Champs génériques par ordre de priorité :
-#   1. metadonnees_collecte/membres_mission         → monitoring_faune, menaces
-#   2. equipe_collecte/membres_mission              → monitoring_reboisement
-#   3. metadonnees_collecte/equipe_collecte/…       → planting_arbre
+#   1. metadonnees_collecte/membres_mission              → monitoring_faune, menaces
+#   2. equipe_collecte/membres_mission                   → monitoring_reboisement
+#   3. metadonnees_collecte/equipe_collecte/membres_mission → planting_arbre
+#   4. membres_mission                                   → dernier recours (champ nu)
 _MEMBRE_FIELDS_GENERIC = (
     "metadonnees_collecte/membres_mission",
     "equipe_collecte/membres_mission",
     "metadonnees_collecte/equipe_collecte/membres_mission",
+    "membres_mission",
 )
 _CHEF_FIELDS_GENERIC = (
     "metadonnees_collecte/responsable_mission",
     "equipe_collecte/responsable_mission",
     "metadonnees_collecte/equipe_collecte/responsable_mission",
+    "responsable_mission",
 )
+
+# Hints pour le scan récursif de secours (membres d'équipe)
+_MEMBRE_SCAN_HINTS: tuple[str, ...] = (
+    "membres_mission",
+    "membres_equipe",
+    "liste_membres",
+    "noms_membres",
+    "equipe_membres",
+)
+
+
+def _kobo_val_to_str(val) -> str | None:
+    """Convertit une valeur Kobo (str, liste select_multiple…) en chaîne non vide ou None."""
+    if val is None or val == "":
+        return None
+    if isinstance(val, (list, tuple)):
+        joined = " ".join(str(v).strip() for v in val if str(v).strip())
+        return joined or None
+    if isinstance(val, str):
+        return val.strip() or None
+    return None
 
 
 def _get_nested_field(sub: dict, *paths: str) -> str | None:
@@ -2897,14 +2921,15 @@ def _get_nested_field(sub: dict, *paths: str) -> str | None:
     Lit un champ Kobo depuis une soumission brute, en supportant :
     - la clé plate  "groupe/champ"  (format API REST KoboToolbox)
     - la clé imbriquée sub["groupe"]["champ"]
+    - les valeurs liste (select_multiple retourné en liste par l'API)
     Retourne la première valeur non vide trouvée parmi les paths.
     """
     for path in paths:
         # 1) Clé plate directe
-        val = sub.get(path)
-        if val and isinstance(val, str) and val.strip():
-            return val.strip()
-        # 2) Navigation imbriquée
+        result = _kobo_val_to_str(sub.get(path))
+        if result:
+            return result
+        # 2) Navigation imbriquée niveau par niveau
         parts = path.split("/")
         node: object = sub
         for part in parts:
@@ -2913,9 +2938,38 @@ def _get_nested_field(sub: dict, *paths: str) -> str | None:
             else:
                 node = None
                 break
-        if node and isinstance(node, str) and node.strip():
-            return node.strip()
+        result = _kobo_val_to_str(node)
+        if result:
+            return result
     return None
+
+
+def _resolve_membres_mission(submission: dict) -> str | None:
+    """Scan récursif de la soumission pour trouver un champ membres d'équipe.
+
+    Fallback quand les chemins hardcodés ne correspondent pas (variante du
+    formulaire, champ nu, etc.). Retourne la valeur brute (chaîne non vide)
+    ou None.
+    """
+    def _scan(node):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                kl = k.lower().split("/")[-1]
+                if any(h in kl for h in _MEMBRE_SCAN_HINTS):
+                    result = _kobo_val_to_str(v)
+                    if result:
+                        return result
+                found = _scan(v)
+                if found:
+                    return found
+        elif isinstance(node, list):
+            for item in node:
+                found = _scan(item)
+                if found:
+                    return found
+        return None
+
+    return _scan(submission)
 
 
 def extract_team_missions(
@@ -2946,16 +3000,22 @@ def extract_team_missions(
             date_mission = str(raw_date)[:10] if raw_date else None
             foret = _resolve_forest(form_key, sub)
 
-            # Sélection des champs selon la forêt détectée
+            # Sélection des champs membres/chef
+            # Priorité : champ spécifique forêt → chemins génériques → scan hint
             membre_field = _MEMBRE_FIELDS_BY_FOREST.get(foret)
             chef_field = _CHEF_FIELDS_BY_FOREST.get(foret)
 
-            if membre_field:
-                membres_raw = _get_nested_field(sub, membre_field, *_MEMBRE_FIELDS_GENERIC)
-                chef_raw = _get_nested_field(sub, chef_field, *_CHEF_FIELDS_GENERIC) if chef_field else _get_nested_field(sub, *_CHEF_FIELDS_GENERIC)
-            else:
-                membres_raw = _get_nested_field(sub, *_MEMBRE_FIELDS_ALL, *_MEMBRE_FIELDS_GENERIC)
-                chef_raw = _get_nested_field(sub, *_CHEF_FIELDS_ALL, *_CHEF_FIELDS_GENERIC)
+            extra_membre = (membre_field,) if membre_field else ()
+            extra_chef   = (chef_field,)   if chef_field   else ()
+
+            membres_raw = (
+                _get_nested_field(sub, *extra_membre, *_MEMBRE_FIELDS_ALL, *_MEMBRE_FIELDS_GENERIC)
+                or _resolve_membres_mission(sub)
+            )
+            chef_raw = (
+                _get_nested_field(sub, *extra_chef, *_CHEF_FIELDS_ALL, *_CHEF_FIELDS_GENERIC)
+                or _resolve_chef_mission(sub)
+            )
 
             # Les membres peuvent être séparés par virgule, point-virgule ou espace
             if membres_raw:
@@ -2991,3 +3051,21 @@ def extract_team_missions(
     # Tri par date décroissante
     result.sort(key=lambda x: x["date_mission"] or "", reverse=True)
     return result
+
+
+def count_approved_submissions(submissions: list[dict]) -> int:
+    """
+    Compte le nombre de réponses avec le statut de validation 'approuvé'.
+    Kobo utilise le champ '_validation_status' qui peut être :
+    - None/empty : pas encore validé
+    - 'approved' : approuvé
+    - 'rejected' : rejeté
+    """
+    count = 0
+    for sub in submissions:
+        validation_status = sub.get("_validation_status")
+        # Approuvé si le statut est 'approved' (case-insensitive)
+        if validation_status and isinstance(validation_status, str):
+            if validation_status.lower().strip() == "approved":
+                count += 1
+    return count

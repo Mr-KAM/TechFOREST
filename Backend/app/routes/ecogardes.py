@@ -20,6 +20,7 @@ from app.schemas.ecogarde import (
     EcogardeCreate,
     EcogardeProfile,
     EcogardesListResponse,
+    EcogardeSuggestion,
     EcogardeUpdate,
 )
 from app.security import get_current_user, require_admin_or_above
@@ -71,6 +72,59 @@ def _merge(eco: Ecogarde, stats: dict) -> EcogardeProfile:
         by_form=stats.get("by_form", {}),
         derniere_mission=stats.get("derniere_mission"),
     )
+
+
+def _parse_kobo_username(username: str) -> tuple[str, str]:
+    """Déduit un prénom et un nom depuis un username Kobo (best-effort).
+
+    "kouame_konan"   → ("Kouame", "Konan")
+    "jean.dupont"    → ("Jean", "Dupont")
+    "j_dupont_bis"   → ("J", "Dupont Bis")
+    "jdupont"        → ("", "Jdupont")
+    """
+    import re
+
+    parts = [p.capitalize() for p in re.split(r"[_.\-\s]+", username.strip()) if p]
+    if len(parts) >= 2:
+        return parts[0], " ".join(parts[1:])
+    if len(parts) == 1:
+        return "", parts[0]
+    return "", username
+
+
+@router.get("/suggestions", response_model=list[EcogardeSuggestion])
+async def get_suggestions(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Retourne les usernames Kobo actifs non encore enregistrés en DB.
+
+    Utile pour pré-remplir l'ajout d'écogardes depuis la liste réelle des
+    agents détectés dans les soumissions KoboToolbox.
+    """
+    kobo_stats = await _fetch_kobo_stats()
+    registered = {eco.code_kobo for eco in db.query(Ecogarde.code_kobo).all()}
+
+    suggestions: list[EcogardeSuggestion] = []
+    for username, stats in kobo_stats.items():
+        if username in registered or username == "anonyme":
+            continue
+        prenom, nom = _parse_kobo_username(username)
+        suggestions.append(
+            EcogardeSuggestion(
+                code_kobo=username,
+                total_submissions=stats["total_submissions"],
+                total_missions=stats["total_missions"],
+                forms_covered=stats["forms_covered"],
+                by_form=stats["by_form"],
+                derniere_mission=stats.get("derniere_mission"),
+                prenom_suggere=prenom,
+                nom_suggere=nom,
+            )
+        )
+
+    suggestions.sort(key=lambda s: s.total_submissions, reverse=True)
+    return suggestions
 
 
 @router.get("", response_model=EcogardesListResponse)

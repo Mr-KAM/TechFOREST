@@ -42,27 +42,50 @@ class Base(DeclarativeBase):
     pass
 
 
-def ensure_postgis(connection):
-    """Active l'extension PostGIS si elle n'existe pas."""
-    from sqlalchemy.exc import NotSupportedError
+def run_migrations() -> None:
+    """Applique toutes les migrations Alembic en attente au démarrage.
+
+    - PostgreSQL : exécute `alembic upgrade head` via l'API programmatique
+      en utilisant DIRECT_URL (connexion directe, pas le pooler pgBouncer).
+    - SQLite (tests) : utilise create_all() car Alembic + PostGIS ne fonctionne
+      pas sur SQLite.
+    """
+    import logging
+    import os
+    from pathlib import Path
+
+    logger = logging.getLogger(__name__)
+
+    if _is_sqlite:
+        # Mode test : création directe des tables sans Alembic
+        Base.metadata.create_all(bind=engine)
+        logger.info("DB (SQLite) : tables créées via create_all")
+        return
+
     try:
-        connection.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
-        connection.commit()
-    except NotSupportedError as e:
-        raise SystemExit(
-            "\n[ERREUR] PostGIS n'est pas installé sur ce serveur PostgreSQL.\n"
-            "  → Supabase : activez PostGIS dans Database → Extensions.\n"
-            "  → Docker   : utilisez l'image postgis/postgis:16-3.4.\n"
-            "  → Bare-metal : apt-get install postgresql-XX-postgis-3\n"
-            f"  Détail : {e}"
-        ) from e
+        from alembic.config import Config
+        from alembic import command as alembic_command
 
+        # Chemin absolu vers alembic.ini (Backend/alembic.ini)
+        ini_path = Path(__file__).resolve().parent.parent / "alembic.ini"
+        alembic_cfg = Config(str(ini_path))
 
-def init_db():
-    """Crée les extensions et les tables. Appelé au démarrage."""
-    with engine.connect() as conn:
-        ensure_postgis(conn)
-    Base.metadata.create_all(bind=engine)
+        # Forcer le chemin du dossier alembic (robuste peu importe le CWD)
+        scripts_dir = Path(__file__).resolve().parent.parent / "alembic"
+        alembic_cfg.set_main_option("script_location", str(scripts_dir))
+
+        # Utiliser DIRECT_URL pour les migrations (jamais le pooler)
+        migration_url = settings.DIRECT_URL or settings.DATABASE_URL
+        alembic_cfg.set_main_option("sqlalchemy.url", migration_url)
+
+        logger.info("Alembic : application des migrations en attente…")
+        alembic_command.upgrade(alembic_cfg, "head")
+        logger.info("Alembic : base de données à jour.")
+    except Exception as exc:
+        # On logue l'erreur mais on ne bloque pas le démarrage si les tables
+        # existent déjà (cas d'une DB déjà migrée manuellement).
+        logger.error("Alembic : échec des migrations automatiques : %s", exc, exc_info=True)
+        raise
 
 
 def get_db():

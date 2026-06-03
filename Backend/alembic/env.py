@@ -9,7 +9,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.database import Base
-from app.models import User, ForestZone, GEELayer  # noqa: F401 – force import
+from app.models import User, ForestZone, GEELayer, Ecogarde  # noqa: F401 – force import
 from app.config import get_settings
 
 config = context.config
