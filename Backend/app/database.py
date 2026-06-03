@@ -88,6 +88,12 @@ def run_migrations() -> None:
         raise
 
 
+def ensure_postgis(conn) -> None:
+    """Active l'extension PostGIS sur la connexion fournie (idempotent)."""
+    conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
+    conn.commit()
+
+
 def get_db():
     """Dependency: yields a SQLAlchemy session per request."""
     db = SessionLocal()
