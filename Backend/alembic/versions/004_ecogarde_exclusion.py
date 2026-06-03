@@ -16,9 +16,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "ecogardes",
-        sa.Column("is_excluded", sa.Boolean(), server_default=sa.text("false"), nullable=False),
+    # IF NOT EXISTS : idempotent si la colonne a déjà été créée manuellement
+    op.execute(
+        "ALTER TABLE ecogardes ADD COLUMN IF NOT EXISTS "
+        "is_excluded BOOLEAN NOT NULL DEFAULT false"
     )
 
 

@@ -149,21 +149,28 @@ async def list_ecogardes(
     """
     kobo_stats = await _fetch_kobo_stats()
 
-    # Auto-créer les entrées DB pour les membres de mission absents
+    # Auto-créer les entrées DB pour les membres de mission absents.
+    # Les codes déjà en base (y compris is_excluded=True) ne sont jamais recréés.
     registered_codes = {eco.code_kobo for eco in db.query(Ecogarde.code_kobo).all()}
     new_count = 0
     for username, stats in kobo_stats.items():
         if username in registered_codes or username == "anonyme":
             continue
         prenom, nom = _parse_kobo_username(username)
-        foret = stats.get("foret")  # forêt principale déduite des missions
+        foret = stats.get("foret")
         db.add(Ecogarde(nom=nom, prenom=prenom, code_kobo=username, foret=foret))
         new_count += 1
     if new_count:
         db.commit()
         logger.info("Auto-création de %d écogarde(s) depuis Kobo", new_count)
 
-    ecogardes = db.query(Ecogarde).order_by(Ecogarde.nom, Ecogarde.prenom).all()
+    # Retourne uniquement les écogardes non exclus
+    ecogardes = (
+        db.query(Ecogarde)
+        .filter(Ecogarde.is_excluded.is_(False))
+        .order_by(Ecogarde.nom, Ecogarde.prenom)
+        .all()
+    )
     profiles = [_merge(eco, kobo_stats.get(eco.code_kobo, {})) for eco in ecogardes]
     return EcogardesListResponse(total=len(profiles), ecogardes=profiles)
 
@@ -249,14 +256,18 @@ def delete_ecogarde(
     current_user: User = Depends(require_admin_or_above),
     db: Session = Depends(get_db),
 ):
-    """Supprime un profil écogarde (admin et superadmin uniquement)."""
+    """Exclut définitivement un écogarde (admin et superadmin uniquement).
+
+    La ligne est marquée is_excluded=True plutôt que supprimée afin d'empêcher
+    l'auto-sync Kobo de la recréer automatiquement.
+    """
     eco = db.query(Ecogarde).filter(Ecogarde.id == ecogarde_id).first()
     if not eco:
         raise HTTPException(status_code=404, detail="Écogarde non trouvé")
-    # Supprimer la photo associée si elle existe
+    # Supprimer la photo si elle existe
     if eco.photo_filename:
         photo_path = _UPLOADS_DIR / eco.photo_filename
-        if photo_path.exists():
-            photo_path.unlink(missing_ok=True)
-    db.delete(eco)
+        photo_path.unlink(missing_ok=True)
+        eco.photo_filename = None
+    eco.is_excluded = True
     db.commit()
