@@ -931,62 +931,116 @@ _ANCIENNETE_LABELS: dict[str, str] = {
     "recent": "Récent", "ancien": "Ancien", "tres_ancien": "Très ancien",
 }
 
+# Clés possibles du repeat group dans les réponses Kobo (le nom a pu changer
+# au fil des versions du formulaire). Toutes sont testées dans l'ordre.
+_MENACES_REPEAT_KEYS: tuple[str, ...] = (
+    "rep_menaces",
+    "menaces",
+    "signalement_menaces",
+    "signalements_menaces",
+    "observations_menaces",
+    "observation_menaces",
+    "menaces_repeat",
+    "liste_menaces",
+)
+
 # Champs Kobo possibles (le formulaire a évolué : nouveaux noms à plat
 # OU anciens noms imbriqués `rep_menaces/principales_menaces/*`).
-_MENACES_REPEAT_KEY = "rep_menaces"
+# Le dernier élément de chaque tuple est toujours le nom court (fallback
+# quand la soumission elle-même représente une seule observation).
 _MENACES_FIELD_PATHS: dict[str, tuple[str, ...]] = {
     "type_pression": (
         "rep_menaces/type_pression",
         "rep_menaces/principales_menaces/Type_pression",
         "rep_menaces/principales_menaces/type_pression",
+        "menaces/type_pression",
+        "signalement_menaces/type_pression",
+        "metadonnees_collecte/type_pression",
         "type_pression",
     ),
     "autre_pression": (
         "rep_menaces/autre_pression",
         "rep_menaces/principales_menaces/autre_pression",
+        "menaces/autre_pression",
         "autre_pression",
     ),
     "indice_pression": (
         "rep_menaces/indice_pression",
         "rep_menaces/principales_menaces/indice_pression",
+        "menaces/indice_pression",
         "indice_pression",
     ),
     "nombre_indices": (
         "rep_menaces/nombre_indices",
         "rep_menaces/principales_menaces/nombre_indices",
+        "menaces/nombre_indices",
         "nombre_indices",
+        "nb_indices",
     ),
     "anciennete_indice": (
         "rep_menaces/anciennete_indice",
         "rep_menaces/principales_menaces/anciennete_indice",
+        "menaces/anciennete_indice",
         "anciennete_indice",
+        "anciennete",
     ),
     "niveau_gravite": (
         "rep_menaces/niveau_gravite",
         "rep_menaces/principales_menaces/niveau_gravite",
+        "menaces/niveau_gravite",
         "niveau_gravite",
+        "gravite",
     ),
     "gps_observation": (
         "rep_menaces/gps_observation",
         "rep_menaces/principales_menaces/gps_observation",
-        "rep_menaces/gps_agriculture_1",  # legacy spécifique agriculture
+        "rep_menaces/gps_agriculture_1",
         "rep_menaces/principales_menaces/gps_agriculture_1",
+        "menaces/gps_observation",
         "gps_observation",
+        "gps_menace",
+        "coordonnees_gps",
     ),
     "photo_observation": (
         "rep_menaces/photo_observation",
         "rep_menaces/principales_menaces/photo_observation",
-        "rep_menaces/img_agriculture_1",  # legacy spécifique agriculture
+        "rep_menaces/img_agriculture_1",
         "rep_menaces/principales_menaces/img_agriculture_1",
+        "menaces/photo_observation",
         "photo_observation",
+        "photo_menace",
+        "photo",
     ),
     "commentaire_observation": (
         "rep_menaces/commentaire_observation",
         "rep_menaces/principales_menaces/commentaire_observation",
         "rep_menaces/commentaire",
+        "menaces/commentaire_observation",
         "commentaire_observation",
+        "commentaire",
     ),
 }
+
+# Clé legacy (compatibilité)
+_MENACES_REPEAT_KEY = _MENACES_REPEAT_KEYS[0]
+
+
+def _get_menaces_items(submission: dict) -> list[dict]:
+    """Retourne les observations de menaces d'une soumission.
+
+    Essaie chaque clé connue du repeat group. Si aucun repeat n'est trouvé
+    mais que la soumission contient directement des champs de menaces, la
+    traite comme une observation unique (formulaire sans repeat).
+    """
+    for key in _MENACES_REPEAT_KEYS:
+        items = submission.get(key)
+        if items and isinstance(items, list):
+            return items
+    # Fallback : la soumission elle-même est l'observation (pas de repeat group)
+    for paths in _MENACES_FIELD_PATHS.values():
+        if _get_field(submission, paths) is not None:
+            return [submission]
+    return []
 
 # Champs au niveau mission/soumission (root)
 _MENACES_SUB_PATHS: dict[str, tuple[str, ...]] = {
@@ -1160,10 +1214,9 @@ def _menaces_compute_all(submissions: list[dict]) -> dict:
             jours.add(date_enq.strip()[:10])
 
         mem = _get_field(s, _MENACES_SUB_PATHS["membres_mission"])
-        if isinstance(mem, str):
-            for m in mem.split():
-                if m:
-                    membres_set.add(m.lower())
+        for m in _split_tokens(mem if isinstance(mem, str) else ""):
+            if m:
+                membres_set.add(m.lower())
 
         resp = _get_field(s, _MENACES_SUB_PATHS["responsable_mission"])
         if isinstance(resp, str) and resp.strip():
@@ -1181,7 +1234,7 @@ def _menaces_compute_all(submissions: list[dict]) -> dict:
             duree_totale_h += (fin - debut).total_seconds() / 3600.0
 
         # ── Observations dans le repeat ──────────────────
-        for item in s.get(_MENACES_REPEAT_KEY) or []:
+        for item in _get_menaces_items(s):
             obs_total += 1
             obs_by_forest[forest] += 1
 
