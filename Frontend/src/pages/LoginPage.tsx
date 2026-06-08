@@ -92,9 +92,15 @@ export default function LoginPage() {
           <p className="text-sm text-sidebar-muted">— Équipe AVOCET AGRI</p>
         </div>
 
-        <p className="text-xs text-sidebar-muted">
-          &copy; {new Date().getFullYear()} AVOCET AGRI — Monitoring forestier par télédétection
-        </p>
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <img src="/Logo Avocet Agri.png" alt="Avocet Agri" className="h-8 w-auto object-contain opacity-90" />
+            <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-8 w-auto object-contain opacity-90" />
+          </div>
+          <p className="text-xs text-sidebar-muted">
+            &copy; {new Date().getFullYear()} AVOCET AGRI — Monitoring forestier par télédétection
+          </p>
+        </div>
       </div>
 
       {/* Right panel — form */}
@@ -103,6 +109,10 @@ export default function LoginPage() {
           <CardHeader className="text-center space-y-2">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 lg:hidden">
               <TreePine className="h-8 w-8 text-primary" />
+            </div>
+            <div className="flex items-center justify-center gap-4 lg:hidden">
+              <img src="/Logo Avocet Agri.png" alt="Avocet Agri" className="h-8 w-auto object-contain" />
+              <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-8 w-auto object-contain" />
             </div>
             {view === "login" && (
               <>

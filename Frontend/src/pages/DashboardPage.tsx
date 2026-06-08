@@ -23,7 +23,25 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Layers, ChevronRight, ChevronLeft, Eye, EyeOff, Satellite, SlidersHorizontal, X, MapPin, Map } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Loader2,
+  Layers,
+  ChevronRight,
+  ChevronLeft,
+  Eye,
+  EyeOff,
+  Satellite,
+  X,
+  MapPin,
+  Map,
+  FlaskConical,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LAYER_TYPES = [
@@ -38,10 +56,10 @@ const LAYER_TYPES = [
 ];
 
 const SUBMISSION_FORM_META: Record<string, { label: string; color: string }> = {
-  monitoring_faune: { label: "Suivi faune", color: "#a855f7" },        // violet
-  monitoring_reboisement: { label: "Reboisement", color: "#16a34a" },  // vert
-  planting_arbre: { label: "Plantation", color: "#0891b2" },           // cyan
-  menaces: { label: "Menaces", color: "#dc2626" },                     // rouge
+  monitoring_faune: { label: "Suivi faune", color: "#a855f7" },
+  monitoring_reboisement: { label: "Reboisement", color: "#16a34a" },
+  planting_arbre: { label: "Plantation", color: "#0891b2" },
+  menaces: { label: "Menaces", color: "#dc2626" },
 };
 
 const LAND_COVER_CLASSES: Record<string, { label: string; color: string }> = {
@@ -60,7 +78,6 @@ function GEETileLayer({ url, opacity = 0.75 }: { url: string; opacity?: number }
   useEffect(() => {
     if (!url) return;
     const cleanUrl = url.trim();
-    console.log("[GEE] Adding tile layer:", cleanUrl);
     const layer = L.tileLayer(cleanUrl, {
       maxZoom: 20,
       minZoom: 0,
@@ -69,14 +86,11 @@ function GEETileLayer({ url, opacity = 0.75 }: { url: string; opacity?: number }
       crossOrigin: true,
     });
     layer.addTo(map);
-    layer.on("tileerror", (e) => console.error("[GEE] Tile error:", e));
-    layer.on("tileload", () => console.log("[GEE] Tile loaded"));
     return () => { map.removeLayer(layer); };
   }, [url, map, opacity]);
   return null;
 }
 
-/** Zoom the map to a specific zone geometry */
 function ZoomToZone({ geometry }: { geometry: GeoJSON.Geometry | null }) {
   const map = useMap();
   useEffect(() => {
@@ -121,10 +135,20 @@ function StatsPanel({ data }: { data: GEEClipResponse }) {
             const cls = LAND_COVER_CLASSES[key] || { label: `Classe ${key}`, color: "#888" };
             const pct = ((val / total) * 100).toFixed(1);
             return (
-              <div key={key} className="flex items-center gap-2 text-sm">
-                <span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: cls.color }} />
-                <span className="flex-1">{cls.label}</span>
-                <span className="font-mono">{pct}%</span>
+              <div key={key} className="space-y-0.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block h-2.5 w-2.5 rounded" style={{ backgroundColor: cls.color }} />
+                    {cls.label}
+                  </span>
+                  <span className="font-mono">{pct}%</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-muted">
+                  <div
+                    className="h-1.5 rounded-full transition-all"
+                    style={{ width: `${pct}%`, backgroundColor: cls.color }}
+                  />
+                </div>
               </div>
             );
           })}
@@ -144,8 +168,6 @@ function StatsPanel({ data }: { data: GEEClipResponse }) {
     </div>
   );
 }
-
-// ─── Légendes par type de couche ─────────────────────────────
 
 interface GradientStop { color: string; label: string }
 
@@ -280,15 +302,12 @@ function LegendSidebar({
   const [open, setOpen] = useState(true);
   const legend = LAYER_LEGENDS[layerType];
 
-
   return (
     <div
       className={cn(
         "flex flex-col border-l bg-card transition-all duration-200",
-        // Desktop
         "lg:relative lg:translate-x-0",
         open ? "lg:w-72" : "lg:w-0 lg:overflow-hidden lg:border-l-0",
-        // Mobile drawer
         "fixed inset-y-0 right-0 z-40 w-[85vw] max-w-sm",
         mobileOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
       )}
@@ -313,11 +332,9 @@ function LegendSidebar({
 
       {(open || mobileOpen) && (
         <div className="flex-1 overflow-y-auto p-4 space-y-5">
-          {/* ── Couches visibles ── */}
           <div>
             <h3 className="text-sm font-semibold mb-2">Couches</h3>
             <div className="space-y-2">
-              {/* Zones toggle */}
               <button
                 onClick={onToggleZones}
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
@@ -331,7 +348,6 @@ function LegendSidebar({
                 <span>Zones de forêt</span>
               </button>
 
-              {/* GEE layer toggle */}
               {geeResult && (
                 <button
                   onClick={onToggleGeeLayer}
@@ -349,7 +365,6 @@ function LegendSidebar({
                 </button>
               )}
 
-              {/* Submissions (Kobo) toggle */}
               <button
                 onClick={onToggleSubmissions}
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
@@ -364,7 +379,6 @@ function LegendSidebar({
               </button>
             </div>
 
-            {/* Sous-légende soumissions par formulaire */}
             {showSubmissions && Object.keys(submissionCounts).length > 0 && (
               <div className="mt-2 ml-1 space-y-1 border-l-2 border-muted pl-2">
                 {Object.entries(SUBMISSION_FORM_META).map(([key, meta]) => {
@@ -384,13 +398,11 @@ function LegendSidebar({
             )}
           </div>
 
-          {/* ── Opacité GEE ── */}
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {((geeResult && showGeeLayer && (
             <OpacitySlider opacity={geeOpacity} onChange={onOpacityChange} />
           )) as any)}
 
-          {/* ── Légende ── */}
           {legend && geeResult && (
             <div>
               <h3 className="text-sm font-semibold mb-2">Légende</h3>
@@ -428,7 +440,6 @@ function LegendSidebar({
             </div>
           )}
 
-          {/* ── Stats résumé ── */}
           {geeResult && geeResult.layer_type === "land_cover" && geeResult.stats.histogram && (
             <div>
               <h3 className="text-sm font-semibold mb-2">Répartition</h3>
@@ -477,6 +488,51 @@ function LegendSidebar({
   );
 }
 
+// ── FAB Analyse GEE ─────────────────────────────────────────────
+function GeeAnalysisFab({
+  hasResult,
+  loading,
+  onClick,
+}: {
+  hasResult: boolean;
+  loading: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label="Analyse GEE"
+      className={cn(
+        // Base — z-[25] : au-dessus du wrapper Leaflet (z-0) mais sous le backdrop (z-30)
+        "absolute bottom-6 left-1/2 -translate-x-1/2 z-[25]",
+        "flex items-center gap-2 shadow-xl transition-all duration-200",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+        // Mobile : cercle compact
+        "h-14 w-14 justify-center rounded-full",
+        // Desktop : pill avec label
+        "sm:h-11 sm:w-auto sm:rounded-full sm:px-5 sm:translate-x-0 sm:left-auto sm:bottom-6 sm:right-6",
+        // Couleurs
+        hasResult
+          ? "bg-primary text-primary-foreground hover:bg-primary/90"
+          : "bg-card text-foreground border border-border hover:bg-accent",
+        loading && "cursor-wait opacity-80"
+      )}
+    >
+      {loading ? (
+        <Loader2 className="h-5 w-5 animate-spin shrink-0" />
+      ) : (
+        <FlaskConical className="h-5 w-5 shrink-0" />
+      )}
+      <span className="hidden sm:inline text-sm font-medium whitespace-nowrap">
+        {loading ? "Analyse en cours…" : hasResult ? "Modifier l'analyse" : "Analyse GEE"}
+      </span>
+      {hasResult && !loading && (
+        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-green-500 ring-2 ring-background sm:hidden" />
+      )}
+    </button>
+  );
+}
+
 export default function DashboardPage() {
   const [zones, setZones] = useState<ForestZone[]>([]);
   const [selectedZone, setSelectedZone] = useState<string>("");
@@ -490,8 +546,8 @@ export default function DashboardPage() {
   const [showZones, setShowZones] = useState(true);
   const [showGeeLayer, setShowGeeLayer] = useState(true);
   const [geeOpacity, setGeeOpacity] = useState(0.75);
-  const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
   const [mobileLegendOpen, setMobileLegendOpen] = useState(false);
+  const [geeModalOpen, setGeeModalOpen] = useState(false);
   const [locations, setLocations] = useState<SubmissionLocation[]>([]);
   const [showSubmissions, setShowSubmissions] = useState(true);
   const [activeTab, setActiveTab] = useState<"satellite" | "observations">("satellite");
@@ -517,13 +573,9 @@ export default function DashboardPage() {
         date_start: dateStart,
         date_end: dateEnd,
       });
-      console.log("[GEE] Clip result:", result);
       setGeeResult(result);
-      // Zoom to the selected zone
       const zone = zones.find((z) => z.id === Number(selectedZone));
-      if (zone?.geometry) {
-        setAnalysisZoneGeometry(zone.geometry);
-      }
+      if (zone?.geometry) setAnalysisZoneGeometry(zone.geometry);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur GEE");
     } finally {
@@ -571,321 +623,349 @@ export default function DashboardPage() {
         </button>
       </div>
 
-    <div className="flex flex-1 relative overflow-hidden">
-      {/* Mobile backdrop */}
-      {(mobileControlsOpen || mobileLegendOpen) && (
-        <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
-          onClick={() => {
-            setMobileControlsOpen(false);
-            setMobileLegendOpen(false);
-          }}
-        />
-      )}
-
-      {/* Mobile floating toggles */}
-      <div className="lg:hidden absolute top-3 left-3 z-20 flex gap-2">
-        <Button
-          size="icon"
-          variant="secondary"
-          className="h-9 w-9 shadow-lg"
-          onClick={() => setMobileControlsOpen(true)}
-        >
-          <SlidersHorizontal className="h-4 w-4" />
-        </Button>
-      </div>
-      <div className="lg:hidden absolute top-3 right-3 z-20">
-        <Button
-          size="icon"
-          variant="secondary"
-          className="h-9 w-9 shadow-lg"
-          onClick={() => setMobileLegendOpen(true)}
-        >
-          <Layers className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Sidebar gauche — contrôles d'analyse GEE (satellite) */}
-      <aside
-        style={{ display: activeTab === "satellite" ? undefined : "none" }}
-        className={cn(
-          "shrink-0 border-r bg-card p-4 space-y-4 overflow-y-auto transition-transform duration-200",
-          // Desktop
-          "lg:relative lg:translate-x-0 lg:w-80",
-          // Mobile
-          "fixed inset-y-0 left-0 z-40 w-[85vw] max-w-sm",
-          mobileControlsOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      <div className="flex flex-1 relative overflow-hidden">
+        {/* Mobile backdrop */}
+        {mobileLegendOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+            onClick={() => setMobileLegendOpen(false)}
+          />
         )}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold flex items-center gap-2">
-            <Satellite className="h-4 w-4 text-primary" /> Analyse GEE
-          </h2>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-[10px] h-5">
-              {zones.length} zones
-            </Badge>
-            <button
-              className="lg:hidden text-muted-foreground hover:text-foreground"
-              onClick={() => setMobileControlsOpen(false)}
-              aria-label="Fermer"
+
+        {/* Mobile legend toggle — top right */}
+        {activeTab === "satellite" && (
+          <div className="lg:hidden absolute top-3 right-3 z-[25]">
+            <Button
+              size="icon"
+              variant="secondary"
+              className="h-9 w-9 shadow-lg"
+              onClick={() => setMobileLegendOpen(true)}
             >
-              <X className="h-4 w-4" />
-            </button>
+              <Layers className="h-4 w-4" />
+            </Button>
           </div>
-        </div>
-        <Separator />
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Zone de forêt</label>
-          <Select value={selectedZone} onValueChange={setSelectedZone}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sélectionner une zone" />
-            </SelectTrigger>
-            <SelectContent>
-              {zones.map((z) => (
-                <SelectItem key={z.id} value={String(z.id)}>
-                  {z.name} {z.area_ha ? `(${z.area_ha} ha)` : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Type de couche</label>
-          <Select value={layerType} onValueChange={setLayerType}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {LAYER_TYPES.map((lt) => (
-                <SelectItem key={lt.value} value={lt.value}>
-                  {lt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1">
-            <label className="text-xs font-medium">Date début</label>
-            <Input type="date" value={dateStart} onChange={(e) => setDateStart(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-medium">Date fin</label>
-            <Input type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} />
-          </div>
-        </div>
-
-        <Button className="w-full h-10" onClick={handleAnalyse} disabled={loading || !selectedZone}>
-          {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Analyse en cours...
-            </>
-          ) : (
-            "Lancer l'analyse"
-          )}
-        </Button>
-
-        {error && <div className="rounded-lg bg-destructive/10 px-3 py-2.5 text-sm text-destructive">{error}</div>}
-
-        {geeResult && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Résultats</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <StatsPanel data={geeResult} />
-            </CardContent>
-          </Card>
         )}
-      </aside>
 
-      {/* Sidebar gauche — observations terrain */}
-      {activeTab === "observations" && (
-        <aside className="shrink-0 border-r bg-card p-4 space-y-4 overflow-y-auto lg:w-72">
-          <h2 className="text-base font-semibold flex items-center gap-2">
-            <Map className="h-4 w-4 text-primary" /> Observations terrain
-          </h2>
-          <Separator />
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground mb-2">
-              {locations.length} point{locations.length !== 1 ? "s" : ""} géolocalisé{locations.length !== 1 ? "s" : ""}
-            </p>
-            {Object.entries(SUBMISSION_FORM_META).map(([key, meta]) => {
-              const count = submissionCounts[key] ?? 0;
-              const active = visibleForms.has(key);
-              return (
-                <button
-                  key={key}
-                  onClick={() => toggleForm(key)}
-                  className={cn(
-                    "flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-sm transition-colors",
-                    active ? "hover:bg-accent" : "opacity-50 hover:bg-accent"
-                  )}
-                >
-                  {active ? (
-                    <Eye className="h-4 w-4" style={{ color: meta.color }} />
-                  ) : (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  )}
-                  <span
-                    className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: meta.color }}
-                  />
-                  <span className="flex-1 text-left">{meta.label}</span>
-                  <span className="font-mono text-xs text-muted-foreground">{count}</span>
-                </button>
-              );
-            })}
-          </div>
-          <Separator />
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Dernières observations</p>
-            {locations
-              .filter((l) => visibleForms.has(l.form_key))
-              .slice(0, 8)
-              .map((loc, i) => {
-                const meta = SUBMISSION_FORM_META[loc.form_key] ?? { label: loc.form_name, color: "#64748b" };
+        {/* Sidebar gauche — observations terrain */}
+        {activeTab === "observations" && (
+          <aside className="shrink-0 border-r bg-card p-4 space-y-4 overflow-y-auto lg:w-72 w-full max-w-[85vw] sm:max-w-none">
+            <h2 className="text-base font-semibold flex items-center gap-2">
+              <Map className="h-4 w-4 text-primary" /> Observations terrain
+            </h2>
+            <Separator />
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground mb-2">
+                {locations.length} point{locations.length !== 1 ? "s" : ""} géolocalisé{locations.length !== 1 ? "s" : ""}
+              </p>
+              {Object.entries(SUBMISSION_FORM_META).map(([key, meta]) => {
+                const count = submissionCounts[key] ?? 0;
+                const active = visibleForms.has(key);
                 return (
-                  <div key={i} className="flex items-start gap-2 rounded-md px-2 py-1.5 hover:bg-accent text-xs">
+                  <button
+                    key={key}
+                    onClick={() => toggleForm(key)}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-sm transition-colors",
+                      active ? "hover:bg-accent" : "opacity-50 hover:bg-accent"
+                    )}
+                  >
+                    {active ? (
+                      <Eye className="h-4 w-4" style={{ color: meta.color }} />
+                    ) : (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    )}
                     <span
-                      className="mt-0.5 inline-block h-2 w-2 shrink-0 rounded-full"
+                      className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
                       style={{ backgroundColor: meta.color }}
                     />
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">{meta.label}</div>
-                      {loc.label && <div className="text-muted-foreground truncate">{loc.label}</div>}
-                      <div className="font-mono text-[10px] text-muted-foreground">
-                        {loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)}
-                      </div>
-                    </div>
-                  </div>
+                    <span className="flex-1 text-left">{meta.label}</span>
+                    <span className="font-mono text-xs text-muted-foreground">{count}</span>
+                  </button>
                 );
               })}
-          </div>
-        </aside>
-      )}
+            </div>
+            <Separator />
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Dernières observations</p>
+              {locations
+                .filter((l) => visibleForms.has(l.form_key))
+                .slice(0, 8)
+                .map((loc, i) => {
+                  const meta = SUBMISSION_FORM_META[loc.form_key] ?? { label: loc.form_name, color: "#64748b" };
+                  return (
+                    <div key={i} className="flex items-start gap-2 rounded-md px-2 py-1.5 hover:bg-accent text-xs">
+                      <span
+                        className="mt-0.5 inline-block h-2 w-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: meta.color }}
+                      />
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{meta.label}</div>
+                        {loc.label && <div className="text-muted-foreground truncate">{loc.label}</div>}
+                        <div className="font-mono text-[10px] text-muted-foreground">
+                          {loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </aside>
+        )}
 
-      {/* Map */}
-      <div className="flex-1 relative">
-        <MapContainer
-          center={[6.8, -5.5]}
-          zoom={7}
-          className="h-full w-full"
-          zoomControl={true}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org">OSM</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
+        {/* Map */}
+        <div className="flex-1 relative">
+          {/* z-0 isole le contexte d'empilement de Leaflet — ses panes internes
+              (z 200-800) ne débordent plus sur le FAB (z-[25] dans le contexte parent) */}
+          <div className="absolute inset-0 z-0">
+          <MapContainer
+            center={[6.8, -5.5]}
+            zoom={7}
+            className="h-full w-full"
+            zoomControl={true}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org">OSM</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
 
-          <FitBounds zones={zones} />
+            <FitBounds zones={zones} />
 
-          {showZones &&
-            zones.map((z) =>
-              z.geometry ? (
-                <GeoJSON
-                  key={z.id}
-                  data={z.geometry as GeoJSON.GeoJsonObject}
-                  style={() => ({
-                    color: "#16a34a",
-                    weight: 2,
-                    fillOpacity: 0.1,
-                  })}
-                  onEachFeature={(_feature, layer) => {
-                    layer.bindTooltip(z.name);
-                  }}
-                />
-              ) : null
+            {showZones &&
+              zones.map((z) =>
+                z.geometry ? (
+                  <GeoJSON
+                    key={z.id}
+                    data={z.geometry as GeoJSON.GeoJsonObject}
+                    style={() => ({
+                      color: "#16a34a",
+                      weight: 2,
+                      fillOpacity: 0.1,
+                    })}
+                    onEachFeature={(_feature, layer) => {
+                      layer.bindTooltip(z.name);
+                    }}
+                  />
+                ) : null
+              )}
+
+            {activeTab === "satellite" && geeResult?.tile_url && showGeeLayer && (
+              <GEETileLayer url={geeResult.tile_url} opacity={geeOpacity} />
             )}
 
-          {activeTab === "satellite" && geeResult?.tile_url && showGeeLayer && (
-            <GEETileLayer url={geeResult.tile_url} opacity={geeOpacity} />
+            {showSubmissions &&
+              locations
+                .filter((loc) => activeTab !== "observations" || visibleForms.has(loc.form_key))
+                .map((loc, idx) => {
+                  const meta = SUBMISSION_FORM_META[loc.form_key] ?? { label: loc.form_name, color: "#64748b" };
+                  return (
+                    <CircleMarker
+                      key={`${loc.form_key}-${loc.submission_id ?? "x"}-${idx}`}
+                      center={[loc.latitude, loc.longitude]}
+                      radius={6}
+                      pathOptions={{
+                        color: meta.color,
+                        weight: 2,
+                        fillColor: meta.color,
+                        fillOpacity: 0.7,
+                      }}
+                    >
+                      <Popup>
+                        <div className="text-xs space-y-0.5">
+                          <div className="font-semibold" style={{ color: meta.color }}>
+                            {meta.label}
+                          </div>
+                          <div className="text-muted-foreground">{loc.form_name}</div>
+                          {loc.label && <div><span className="font-medium">Détail :</span> {loc.label}</div>}
+                          <div className="font-mono text-[10px] mt-1">
+                            {loc.latitude.toFixed(5)}, {loc.longitude.toFixed(5)}
+                          </div>
+                          {loc.altitude != null && (
+                            <div className="text-[10px] text-muted-foreground">
+                              Alt. {loc.altitude.toFixed(1)} m
+                              {loc.accuracy != null && ` · ±${loc.accuracy.toFixed(1)} m`}
+                            </div>
+                          )}
+                          {loc.submitted_at && (
+                            <div className="text-[10px] text-muted-foreground">
+                              {new Date(loc.submitted_at).toLocaleString("fr-FR")}
+                            </div>
+                          )}
+                          {loc.image_url && (() => {
+                            const authedUrl = withAuthQuery(loc.image_url);
+                            return (
+                              <a href={authedUrl} target="_blank" rel="noreferrer">
+                                <img
+                                  src={authedUrl}
+                                  alt="Observation"
+                                  style={{ marginTop: 6, width: 180, maxHeight: 140, objectFit: "cover", borderRadius: 4, display: "block" }}
+                                  loading="lazy"
+                                />
+                              </a>
+                            );
+                          })()}
+                        </div>
+                      </Popup>
+                    </CircleMarker>
+                  );
+                })}
+
+            {analysisZoneGeometry && <ZoomToZone geometry={analysisZoneGeometry} />}
+          </MapContainer>
+          </div>{/* fin du wrapper Leaflet z-0 */}
+
+          {/* FAB Analyse GEE */}
+          {activeTab === "satellite" && (
+            <GeeAnalysisFab
+              hasResult={!!geeResult}
+              loading={loading}
+              onClick={() => setGeeModalOpen(true)}
+            />
           )}
+        </div>
 
-          {showSubmissions &&
-            locations
-            .filter((loc) => activeTab !== "observations" || visibleForms.has(loc.form_key))
-            .map((loc, idx) => {
-              const meta = SUBMISSION_FORM_META[loc.form_key] ?? { label: loc.form_name, color: "#64748b" };
-              return (
-                <CircleMarker
-                  key={`${loc.form_key}-${loc.submission_id ?? "x"}-${idx}`}
-                  center={[loc.latitude, loc.longitude]}
-                  radius={6}
-                  pathOptions={{
-                    color: meta.color,
-                    weight: 2,
-                    fillColor: meta.color,
-                    fillOpacity: 0.7,
-                  }}
-                >
-                  <Popup>
-                    <div className="text-xs space-y-0.5">
-                      <div className="font-semibold" style={{ color: meta.color }}>
-                        {meta.label}
-                      </div>
-                      <div className="text-muted-foreground">{loc.form_name}</div>
-                      {loc.label && <div><span className="font-medium">Détail :</span> {loc.label}</div>}
-                      <div className="font-mono text-[10px] mt-1">
-                        {loc.latitude.toFixed(5)}, {loc.longitude.toFixed(5)}
-                      </div>
-                      {loc.altitude != null && (
-                        <div className="text-[10px] text-muted-foreground">
-                          Alt. {loc.altitude.toFixed(1)} m
-                          {loc.accuracy != null && ` · ±${loc.accuracy.toFixed(1)} m`}
-                        </div>
-                      )}
-                      {loc.submitted_at && (
-                        <div className="text-[10px] text-muted-foreground">
-                          {new Date(loc.submitted_at).toLocaleString("fr-FR")}
-                        </div>
-                      )}
-                      {loc.image_url && (() => {
-                        const authedUrl = withAuthQuery(loc.image_url);
-                        return (
-                          <a href={authedUrl} target="_blank" rel="noreferrer">
-                            <img
-                              src={authedUrl}
-                              alt="Observation"
-                              style={{ marginTop: 6, width: 180, maxHeight: 140, objectFit: "cover", borderRadius: 4, display: "block" }}
-                              loading="lazy"
-                            />
-                          </a>
-                        );
-                      })()}
-                    </div>
-                  </Popup>
-                </CircleMarker>
-              );
-            })}
-
-          {analysisZoneGeometry && <ZoomToZone geometry={analysisZoneGeometry} />}
-        </MapContainer>
+        {/* Sidebar droite – Légende (satellite uniquement) */}
+        {activeTab === "satellite" && (
+          <LegendSidebar
+            layerType={geeResult?.layer_type ?? layerType}
+            geeResult={geeResult}
+            showZones={showZones}
+            onToggleZones={() => setShowZones((v) => !v)}
+            showGeeLayer={showGeeLayer}
+            onToggleGeeLayer={() => setShowGeeLayer((v) => !v)}
+            geeOpacity={geeOpacity}
+            onOpacityChange={setGeeOpacity}
+            mobileOpen={mobileLegendOpen}
+            onMobileClose={() => setMobileLegendOpen(false)}
+            showSubmissions={showSubmissions}
+            onToggleSubmissions={() => setShowSubmissions((v) => !v)}
+            submissionCounts={submissionCounts}
+          />
+        )}
       </div>
 
-      {/* Sidebar droite – Légende (satellite uniquement) */}
-      {activeTab === "satellite" && (
-        <LegendSidebar
-          layerType={geeResult?.layer_type ?? layerType}
-          geeResult={geeResult}
-          showZones={showZones}
-          onToggleZones={() => setShowZones((v) => !v)}
-          showGeeLayer={showGeeLayer}
-          onToggleGeeLayer={() => setShowGeeLayer((v) => !v)}
-          geeOpacity={geeOpacity}
-          onOpacityChange={setGeeOpacity}
-          mobileOpen={mobileLegendOpen}
-          onMobileClose={() => setMobileLegendOpen(false)}
-          showSubmissions={showSubmissions}
-          onToggleSubmissions={() => setShowSubmissions((v) => !v)}
-          submissionCounts={submissionCounts}
-        />
-      )}
-    </div>
+      {/* ── Modal Analyse GEE ── */}
+      <Dialog open={geeModalOpen} onOpenChange={setGeeModalOpen}>
+        <DialogContent className="sm:max-w-md w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Satellite className="h-5 w-5 text-primary" />
+              Analyse Google Earth Engine
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-1">
+            {/* Zone */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Zone de forêt</label>
+              <Select value={selectedZone} onValueChange={setSelectedZone}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une zone" />
+                </SelectTrigger>
+                <SelectContent>
+                  {zones.map((z) => (
+                    <SelectItem key={z.id} value={String(z.id)}>
+                      {z.name} {z.area_ha ? `(${z.area_ha} ha)` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Type de couche */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Type de couche</label>
+              <Select value={layerType} onValueChange={setLayerType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LAYER_TYPES.map((lt) => (
+                    <SelectItem key={lt.value} value={lt.value}>
+                      {lt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Dates */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Date début</label>
+                <Input
+                  type="date"
+                  value={dateStart}
+                  onChange={(e) => setDateStart(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Date fin</label>
+                <Input
+                  type="date"
+                  value={dateEnd}
+                  onChange={(e) => setDateEnd(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Erreur */}
+            {error && (
+              <div className="rounded-lg bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
+            {/* Bouton lancer */}
+            <Button
+              className="w-full h-11"
+              onClick={handleAnalyse}
+              disabled={loading || !selectedZone}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Analyse en cours…
+                </>
+              ) : (
+                <>
+                  <FlaskConical className="h-4 w-4" />
+                  Lancer l'analyse
+                </>
+              )}
+            </Button>
+
+            {/* Résultats */}
+            {geeResult && !loading && (
+              <>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">Résultats</span>
+                  <Badge variant="outline" className="text-[10px] h-5 text-green-600 border-green-600/40">
+                    Couche appliquée
+                  </Badge>
+                </div>
+                <Card className="border-primary/20 bg-primary/5">
+                  <CardHeader className="pb-2 pt-3 px-4">
+                    <CardTitle className="text-xs text-muted-foreground font-normal">
+                      {LAYER_TYPES.find((l) => l.value === geeResult.layer_type)?.label} · {geeResult.forest_zone_name}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4">
+                    <StatsPanel data={geeResult} />
+                  </CardContent>
+                </Card>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setGeeModalOpen(false)}
+                >
+                  Voir sur la carte
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

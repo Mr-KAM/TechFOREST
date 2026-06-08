@@ -151,14 +151,20 @@ export default function HomePage() {
       {/* ── Fixed top nav ── */}
       <nav className="fixed top-0 inset-x-0 z-50 border-b bg-background/80 backdrop-blur-lg">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20">
-              <TreePine className="h-5 w-5 text-primary" />
+          <div className="flex items-center gap-4">
+            <Link to="/" className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20">
+                <TreePine className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-lg font-bold tracking-tight">
+                Tech<span className="text-primary">FOREST</span>
+              </span>
+            </Link>
+            <div className="hidden sm:flex items-center gap-3 border-l pl-4">
+              <img src="/Logo Avocet Agri.png" alt="Avocet Agri" className="h-7 w-auto object-contain" />
+              <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-7 w-auto object-contain" />
             </div>
-            <span className="text-lg font-bold tracking-tight">
-              Tech<span className="text-primary">FOREST</span>
-            </span>
-          </Link>
+          </div>
 
           <div className="flex items-center gap-2">
             <Button
@@ -343,6 +349,10 @@ export default function HomePage() {
       {/* ── Footer ── */}
       <footer className="border-t py-10 text-center">
         <div className="mx-auto max-w-5xl px-4">
+          <div className="flex items-center justify-center gap-6 mb-6">
+            <img src="/Logo Avocet Agri.png" alt="Avocet Agri" className="h-12 w-auto object-contain" />
+            <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-12 w-auto object-contain" />
+          </div>
           <div className="flex items-center justify-center gap-2 mb-3">
             <TreePine className="h-5 w-5 text-primary" />
             <span className="font-bold">TechFOREST</span>

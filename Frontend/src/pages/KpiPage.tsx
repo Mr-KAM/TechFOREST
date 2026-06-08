@@ -120,6 +120,7 @@ import {
   Trash2,
   Phone,
   Mail,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth, ROLES, isAdmin } from "@/lib/auth";
@@ -218,9 +219,24 @@ const INDICATOR_META: Record<string, IndicatorDisplay> = {
   "Arbres plantés":           { icon: Sprout,     color: "#65a30d" },
   "Espèces plantées":         { icon: Leaf,       color: "#4d7c0f" },
   "Superficie plantée":       { icon: MapPin,     color: "#3f6212" },
-  "Missions réalisées":       { icon: ClipboardList, color: "#f59e0b" },
-  "Signalements de menaces":  { icon: ShieldAlert, color: "#d97706" },
-  "Types de menaces":         { icon: AlertTriangle, color: "#b45309" },
+  "Missions réalisées":              { icon: ClipboardList,  color: "#f59e0b" },
+  "Signalements de menaces":         { icon: ShieldAlert,    color: "#d97706" },
+  "Types de menaces":                { icon: AlertTriangle,  color: "#b45309" },
+  "Nombre total d'indices":          { icon: Hash,           color: "#b45309" },
+  "Moyenne d'indices par observation": { icon: Hash,         color: "#92400e" },
+  "Diversité des indices de pression": { icon: Search,       color: "#78350f" },
+  "Score moyen de gravité":          { icon: AlertTriangle,  color: "#dc2626" },
+  "Taux de menaces graves":          { icon: ShieldAlert,    color: "#b91c1c" },
+  "Score d'activité (ancienneté)":   { icon: Timer,          color: "#9a3412" },
+  "Taux de menaces récentes":        { icon: Timer,          color: "#c2410c" },
+  "Indice de pression brut":         { icon: BarChart3,      color: "#ea580c" },
+  "Indice de pression active":       { icon: BarChart3,      color: "#d97706" },
+  "Menaces géolocalisées":           { icon: MapPinned,      color: "#0d9488" },
+  "Taux de menaces géolocalisées":   { icon: MapPinned,      color: "#0f766e" },
+  "Observations par mission":        { icon: Eye,            color: "#f59e0b" },
+  "Taux observations avec commentaire": { icon: FileText,    color: "#78350f" },
+  "Taux missions avec signature":    { icon: CheckCircle2,   color: "#065f46" },
+  "Taux missions avec photo équipe": { icon: Camera,         color: "#9d174d" },
 };
 
 // Section d'indicateurs pour un formulaire (réutilisée dans plusieurs onglets)
