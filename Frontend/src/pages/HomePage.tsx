@@ -350,15 +350,19 @@ export default function HomePage() {
       <footer className="border-t py-10 text-center">
         <div className="mx-auto max-w-5xl px-4">
           <div className="flex items-center justify-center gap-6 mb-6">
-            <img src="/Logo Avocet Agri.png" alt="Avocet Agri" className="h-12 w-auto object-contain" />
-            <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-12 w-auto object-contain" />
+            <a href="https://avocet-agri.com/" target="_blank" rel="noreferrer" className="opacity-80 hover:opacity-100 transition-opacity">
+              <img src="/Logo Avocet Agri.png" alt="Avocet Agri" className="h-12 w-auto object-contain" />
+            </a>
+            <a href="https://www.rainforest-alliance.org/fr/" target="_blank" rel="noreferrer" className="opacity-80 hover:opacity-100 transition-opacity">
+              <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-12 w-auto object-contain" />
+            </a>
           </div>
           <div className="flex items-center justify-center gap-2 mb-3">
             <TreePine className="h-5 w-5 text-primary" />
             <span className="font-bold">TechFOREST</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} AVOCET AGRI — Monitoring forestier par télédétection.
+            &copy; {new Date().getFullYear()} AVOCET AGRI — Monitoring forestier à 3 niveau (3LDM).
           </p>
         </div>
       </footer>

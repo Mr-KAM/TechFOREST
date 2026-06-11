@@ -307,7 +307,7 @@ function LegendSidebar({
       className={cn(
         "flex flex-col border-l bg-card transition-all duration-200",
         "lg:relative lg:translate-x-0",
-        open ? "lg:w-72" : "lg:w-0 lg:overflow-hidden lg:border-l-0",
+        open ? "lg:w-72" : "lg:w-0 lg:border-l-0",
         "fixed inset-y-0 right-0 z-40 w-[85vw] max-w-sm",
         mobileOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
       )}
