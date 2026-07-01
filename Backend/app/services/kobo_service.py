@@ -940,6 +940,7 @@ _MENACES_REPEAT_KEYS: tuple[str, ...] = (
     "signalements_menaces",
     "observations_menaces",
     "observation_menaces",
+    "observation_menace",
     "menaces_repeat",
     "liste_menaces",
 )
@@ -950,6 +951,7 @@ _MENACES_REPEAT_KEYS: tuple[str, ...] = (
 # quand la soumission elle-même représente une seule observation).
 _MENACES_FIELD_PATHS: dict[str, tuple[str, ...]] = {
     "type_pression": (
+        "observation_menace/details_menace/type_pression",
         "rep_menaces/type_pression",
         "rep_menaces/principales_menaces/Type_pression",
         "rep_menaces/principales_menaces/type_pression",
@@ -959,18 +961,21 @@ _MENACES_FIELD_PATHS: dict[str, tuple[str, ...]] = {
         "type_pression",
     ),
     "autre_pression": (
+        "observation_menace/details_menace/autre_pression",
         "rep_menaces/autre_pression",
         "rep_menaces/principales_menaces/autre_pression",
         "menaces/autre_pression",
         "autre_pression",
     ),
     "indice_pression": (
+        "observation_menace/details_menace/indice_pression",
         "rep_menaces/indice_pression",
         "rep_menaces/principales_menaces/indice_pression",
         "menaces/indice_pression",
         "indice_pression",
     ),
     "nombre_indices": (
+        "observation_menace/details_menace/nombre_indices",
         "rep_menaces/nombre_indices",
         "rep_menaces/principales_menaces/nombre_indices",
         "menaces/nombre_indices",
@@ -978,6 +983,7 @@ _MENACES_FIELD_PATHS: dict[str, tuple[str, ...]] = {
         "nb_indices",
     ),
     "anciennete_indice": (
+        "observation_menace/details_menace/anciennete_indice",
         "rep_menaces/anciennete_indice",
         "rep_menaces/principales_menaces/anciennete_indice",
         "menaces/anciennete_indice",
@@ -985,6 +991,7 @@ _MENACES_FIELD_PATHS: dict[str, tuple[str, ...]] = {
         "anciennete",
     ),
     "niveau_gravite": (
+        "observation_menace/details_menace/niveau_gravite",
         "rep_menaces/niveau_gravite",
         "rep_menaces/principales_menaces/niveau_gravite",
         "menaces/niveau_gravite",
@@ -992,6 +999,7 @@ _MENACES_FIELD_PATHS: dict[str, tuple[str, ...]] = {
         "gravite",
     ),
     "gps_observation": (
+        "observation_menace/details_menace/gps_observation",
         "rep_menaces/gps_observation",
         "rep_menaces/principales_menaces/gps_observation",
         "rep_menaces/gps_agriculture_1",
@@ -1002,6 +1010,7 @@ _MENACES_FIELD_PATHS: dict[str, tuple[str, ...]] = {
         "coordonnees_gps",
     ),
     "photo_observation": (
+        "observation_menace/details_menace/photo_observation",
         "rep_menaces/photo_observation",
         "rep_menaces/principales_menaces/photo_observation",
         "rep_menaces/img_agriculture_1",
@@ -1012,6 +1021,7 @@ _MENACES_FIELD_PATHS: dict[str, tuple[str, ...]] = {
         "photo",
     ),
     "commentaire_observation": (
+        "observation_menace/details_menace/commentaire_observation",
         "rep_menaces/commentaire_observation",
         "rep_menaces/principales_menaces/commentaire_observation",
         "rep_menaces/commentaire",

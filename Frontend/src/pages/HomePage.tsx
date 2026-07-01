@@ -363,7 +363,7 @@ export default function HomePage() {
           </div>
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()}  &thinsp;
-            <a href="https://avocet-agri.com/" target="_blank" rel="noreferrer" className="opacity-80 hover:opacity-100 transition-opacity">
+            <a href="https://avocet-agri.com/" target="_blank" rel="noreferrer" className="opacity-80 hover:opacity-100 transition-opacity text-primary">
             AVOCET AGRI </a> — Monitoring forestier à 3 niveau (3LDM).
           </p>
         </div>
