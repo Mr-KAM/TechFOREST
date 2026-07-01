@@ -161,7 +161,7 @@ export default function HomePage() {
               </span>
             </Link>
             <div className="hidden sm:flex items-center gap-3 border-l pl-4">
-              <img src="/Logo Avocet Agri.png" alt="Avocet Agri" className="h-7 w-auto object-contain" />
+              <img src="/mitsubishi.jpeg" alt="Mitsubishi" className="h-7 w-auto object-contain" />
               <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-7 w-auto object-contain" />
             </div>
           </div>
@@ -350,8 +350,8 @@ export default function HomePage() {
       <footer className="border-t py-10 text-center">
         <div className="mx-auto max-w-5xl px-4">
           <div className="flex items-center justify-center gap-6 mb-6">
-            <a href="https://avocet-agri.com/" target="_blank" rel="noreferrer" className="opacity-80 hover:opacity-100 transition-opacity">
-              <img src="/Logo Avocet Agri.png" alt="Avocet Agri" className="h-12 w-auto object-contain" />
+            <a href="https://www.mitsubishicorp.com/gb/en/mcf-for-emea/" target="_blank" rel="noreferrer" className="opacity-80 hover:opacity-100 transition-opacity">
+              <img src="/mitsubishi.jpeg" alt="Mitsubishi" className="h-12 w-auto object-contain" />
             </a>
             <a href="https://www.rainforest-alliance.org/fr/" target="_blank" rel="noreferrer" className="opacity-80 hover:opacity-100 transition-opacity">
               <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-12 w-auto object-contain" />
@@ -362,7 +362,9 @@ export default function HomePage() {
             <span className="font-bold">TechFOREST</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} AVOCET AGRI — Monitoring forestier à 3 niveau (3LDM).
+            &copy; {new Date().getFullYear()} 
+            <a href="https://avocet-agri.com/" target="_blank" rel="noreferrer" className="opacity-80 hover:opacity-100 transition-opacity">
+            AVOCET AGRI </a> — Monitoring forestier à 3 niveau (3LDM).
           </p>
         </div>
       </footer>
