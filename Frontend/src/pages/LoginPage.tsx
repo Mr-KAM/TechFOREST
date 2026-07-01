@@ -97,8 +97,10 @@ export default function LoginPage() {
             <img src="/mitsubishi.png" alt="mitsubishi" className="h-8 w-auto object-contain opacity-90" />
             <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-8 w-auto object-contain opacity-90" />
           </div>
-          <p className="text-xs text-sidebar-muted">
-            &copy; {new Date().getFullYear()} AVOCET AGRI — Monitoring forestier par télédétection
+          <p className="text-sm text-muted-foreground">
+            &copy; {new Date().getFullYear()}  &thinsp;
+            <a href="https://avocet-agri.com/" target="_blank" rel="noreferrer" className="opacity-80 hover:opacity-100 transition-opacity text-primary">
+            AVOCET AGRI </a> — Monitoring forestier à 3 niveau (3LDM).
           </p>
         </div>
       </div>
