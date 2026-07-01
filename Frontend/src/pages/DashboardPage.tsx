@@ -284,6 +284,8 @@ function LegendSidebar({
   showSubmissions,
   onToggleSubmissions,
   submissionCounts,
+  baseMap,
+  onBaseMapChange,
 }: {
   layerType: string;
   geeResult: GEEClipResponse | null;
@@ -298,6 +300,8 @@ function LegendSidebar({
   showSubmissions: boolean;
   onToggleSubmissions: () => void;
   submissionCounts: Record<string, number>;
+  baseMap: "plan" | "satellite";
+  onBaseMapChange: (v: "plan" | "satellite") => void;
 }) {
   const [open, setOpen] = useState(true);
   const legend = LAYER_LEGENDS[layerType];
@@ -332,6 +336,30 @@ function LegendSidebar({
 
       {(open || mobileOpen) && (
         <div className="flex-1 overflow-y-auto p-4 space-y-5">
+          <div>
+            <h3 className="text-sm font-semibold mb-2">Fond de carte</h3>
+            <div className="flex rounded-md border p-0.5 text-sm">
+              <button
+                onClick={() => onBaseMapChange("plan")}
+                className={cn(
+                  "flex-1 rounded px-2 py-1 transition-colors",
+                  baseMap === "plan" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                )}
+              >
+                Plan
+              </button>
+              <button
+                onClick={() => onBaseMapChange("satellite")}
+                className={cn(
+                  "flex-1 rounded px-2 py-1 transition-colors",
+                  baseMap === "satellite" ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                )}
+              >
+                Satellite
+              </button>
+            </div>
+          </div>
+
           <div>
             <h3 className="text-sm font-semibold mb-2">Couches</h3>
             <div className="space-y-2">
@@ -550,6 +578,7 @@ export default function DashboardPage() {
   const [geeModalOpen, setGeeModalOpen] = useState(false);
   const [locations, setLocations] = useState<SubmissionLocation[]>([]);
   const [showSubmissions, setShowSubmissions] = useState(true);
+  const [baseMap, setBaseMap] = useState<"plan" | "satellite">("plan");
   const [activeTab, setActiveTab] = useState<"satellite" | "observations">("satellite");
   const [visibleForms, setVisibleForms] = useState<Set<string>>(new Set(Object.keys(SUBMISSION_FORM_META)));
 
@@ -723,10 +752,17 @@ export default function DashboardPage() {
             className="h-full w-full"
             zoomControl={true}
           >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org">OSM</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
+            {baseMap === "satellite" ? (
+              <TileLayer
+                attribution='Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics'
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              />
+            ) : (
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org">OSM</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+            )}
 
             <FitBounds zones={zones} />
 
@@ -839,6 +875,8 @@ export default function DashboardPage() {
             showSubmissions={showSubmissions}
             onToggleSubmissions={() => setShowSubmissions((v) => !v)}
             submissionCounts={submissionCounts}
+            baseMap={baseMap}
+            onBaseMapChange={setBaseMap}
           />
         )}
       </div>
