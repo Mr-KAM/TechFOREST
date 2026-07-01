@@ -87,14 +87,14 @@ export default function LoginPage() {
         <div className="space-y-4">
           <blockquote className="text-lg leading-relaxed text-sidebar-foreground/80">
             "TechFOREST nous permet de surveiller en temps réel la couverture forestière
-            et d'agir rapidement face aux changements détectés par satellite."
+            et d'agir rapidement face aux changements détectés grâce aux données terrains et par satellite."
           </blockquote>
           <p className="text-sm text-sidebar-muted">— Équipe AVOCET AGRI</p>
         </div>
 
         <div className="space-y-3">
           <div className="flex items-center gap-4">
-            <img src="/Logo Avocet Agri.png" alt="Avocet Agri" className="h-8 w-auto object-contain opacity-90" />
+            <img src="/mitsubishi.jpeg" alt="mitsubishi" className="h-8 w-auto object-contain opacity-90" />
             <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-8 w-auto object-contain opacity-90" />
           </div>
           <p className="text-xs text-sidebar-muted">
@@ -111,7 +111,7 @@ export default function LoginPage() {
               <TreePine className="h-8 w-8 text-primary" />
             </div>
             <div className="flex items-center justify-center gap-4 lg:hidden">
-              <img src="/Logo Avocet Agri.png" alt="Avocet Agri" className="h-8 w-auto object-contain" />
+              <img src="/mitsubishi.jpeg" alt="mitsubishi" className="h-8 w-auto object-contain" />
               <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-8 w-auto object-contain" />
             </div>
             {view === "login" && (
