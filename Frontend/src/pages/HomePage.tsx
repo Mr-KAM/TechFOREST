@@ -362,7 +362,7 @@ export default function HomePage() {
             <span className="font-bold">TechFOREST</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} 
+            &copy; {new Date().getFullYear()}  &thinsp;
             <a href="https://avocet-agri.com/" target="_blank" rel="noreferrer" className="opacity-80 hover:opacity-100 transition-opacity">
             AVOCET AGRI </a> — Monitoring forestier à 3 niveau (3LDM).
           </p>
