@@ -161,7 +161,7 @@ export default function HomePage() {
               </span>
             </Link>
             <div className="hidden sm:flex items-center gap-3 border-l pl-4">
-              <img src="/mitsubishi.jpeg" alt="Mitsubishi" className="h-7 w-auto object-contain" />
+              <img src="/mitsubishi.png" alt="Mitsubishi" className="h-7 w-auto object-contain" />
               <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-7 w-auto object-contain" />
             </div>
           </div>
@@ -351,7 +351,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-5xl px-4">
           <div className="flex items-center justify-center gap-6 mb-6">
             <a href="https://www.mitsubishicorp.com/gb/en/mcf-for-emea/" target="_blank" rel="noreferrer" className="opacity-80 hover:opacity-100 transition-opacity">
-              <img src="/mitsubishi.jpeg" alt="Mitsubishi" className="h-12 w-auto object-contain" />
+              <img src="/mitsubishi.png" alt="Mitsubishi" className="h-12 w-auto object-contain" />
             </a>
             <a href="https://www.rainforest-alliance.org/fr/" target="_blank" rel="noreferrer" className="opacity-80 hover:opacity-100 transition-opacity">
               <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-12 w-auto object-contain" />

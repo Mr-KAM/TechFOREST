@@ -94,7 +94,7 @@ export default function LoginPage() {
 
         <div className="space-y-3">
           <div className="flex items-center gap-4">
-            <img src="/mitsubishi.jpeg" alt="mitsubishi" className="h-8 w-auto object-contain opacity-90" />
+            <img src="/mitsubishi.png" alt="mitsubishi" className="h-8 w-auto object-contain opacity-90" />
             <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-8 w-auto object-contain opacity-90" />
           </div>
           <p className="text-xs text-sidebar-muted">
@@ -111,7 +111,7 @@ export default function LoginPage() {
               <TreePine className="h-8 w-8 text-primary" />
             </div>
             <div className="flex items-center justify-center gap-4 lg:hidden">
-              <img src="/mitsubishi.jpeg" alt="mitsubishi" className="h-8 w-auto object-contain" />
+              <img src="/mitsubishi.png" alt="mitsubishi" className="h-8 w-auto object-contain" />
               <img src="/2019-Rainforest-Alliance-logo.png" alt="Rainforest Alliance" className="h-8 w-auto object-contain" />
             </div>
             {view === "login" && (
