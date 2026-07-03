@@ -7168,7 +7168,7 @@ export default function KpiPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-base">Formulaires configurés</CardTitle>
-                  <CardDescription>Activités KoboToolbox du projet TechFOREST</CardDescription>
+                  <CardDescription>Activités KoboToolbox du projet TechFORESTS</CardDescription>
                 </div>
                 <Badge variant="outline">{configuredForms.length} formulaires</Badge>
               </div>

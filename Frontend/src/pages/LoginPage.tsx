@@ -81,12 +81,12 @@ export default function LoginPage() {
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20">
             <TreePine className="h-6 w-6 text-primary" />
           </div>
-          <span className="text-xl font-bold tracking-tight">TechFOREST</span>
+          <span className="text-xl font-bold tracking-tight">TechFORESTS</span>
         </div>
 
         <div className="space-y-4">
           <blockquote className="text-lg leading-relaxed text-sidebar-foreground/80">
-            "TechFOREST nous permet de surveiller en temps réel la couverture forestière
+            "TechFORESTS nous permet de surveiller en temps réel la couverture forestière
             et d'agir rapidement face aux changements détectés grâce aux données terrains et par satellite."
           </blockquote>
           <p className="text-sm text-sidebar-muted">— Équipe AVOCET AGRI</p>

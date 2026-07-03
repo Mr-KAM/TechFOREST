@@ -321,7 +321,7 @@ export default function HomePage() {
           </Badge>
           <h2 className="text-3xl font-bold sm:text-4xl">Présentation vidéo</h2>
           <p className="mt-3 text-muted-foreground">
-            Découvrez TechFOREST en action — survol par drone et démonstration de la plateforme.
+            Découvrez TechFORESTS en action — survol par drone et démonstration de la plateforme.
           </p>
           <div className="relative mt-10 overflow-hidden rounded-2xl border bg-card shadow-xl">
             <video
@@ -359,7 +359,7 @@ export default function HomePage() {
           </div>
           <div className="flex items-center justify-center gap-2 mb-3">
             <TreePine className="h-5 w-5 text-primary" />
-            <span className="font-bold">TechFOREST</span>
+            <span className="font-bold">TechFORESTS</span>
           </div>
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()}  &thinsp;
